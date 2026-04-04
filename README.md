@@ -34,7 +34,7 @@ php bin/console messenger:consume async -vv
 
 ### Pre-seeded credentials
 
-Six test users are pre-seeded with the password `test` — see [`AppFixtures`](api/src/DataFixtures/CustomerFixtures.php) for usernames and UUIDs.
+Six test users are pre-seeded with the password `customer-password` — see [`AppFixtures`](api/src/DataFixtures/AppFixtures.php) for usernames and UUIDs.
 
 ## Architecture Overview
 
