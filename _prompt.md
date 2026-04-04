@@ -90,3 +90,15 @@ lets create reviewer make task that will create keypair, migrate both dev & test
 ## 2026-04-04T17:43:25+02:00 [gpt-5.4 high]
 commit and push
 
+## 2026-04-04T17:33:11+02:00 [gpt-5.4 high]
+please set up github actions so that  make lint, make analyze, make jwt-keypair & make test run inside same job.
+
+## 2026-04-04T17:36:03+02:00 [gpt-5.4 high]
+remove alias from makefile, it was my typo
+
+## 2026-04-04T17:37:14+02:00 [gpt-5.4 high]
+please commit
+
+## 2026-04-04T19:36:03+02:00 [gpt-5.4 high]
+please set php to 8.5 everywhere needed
+
