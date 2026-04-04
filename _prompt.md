@@ -99,3 +99,6 @@ remove alias from makefile, it was my typo
 ## 2026-04-04T17:37:14+02:00 [gpt-5.4 high]
 please commit
 
+## 2026-04-04T19:36:03+02:00 [gpt-5.4 high]
+please set php to 8.5 everywhere needed
+
