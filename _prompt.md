@@ -72,3 +72,15 @@ please commit
 ## 2026-04-04T16:52:48+02:00 [gpt-5.4 high]
 no, commit all changes together
 
+## 2026-04-04T16:58:01+02:00 [gpt-5.4 high]
+- create conversion controller with method to create, method to see status and method to download file
+
+## 2026-04-04T16:58:46+02:00 [gpt-5.4 high]
+no, just create empty methods returning 500
+
+## 2026-04-04T17:04:08+02:00 [gpt-5.4 high]
+add security test that verifies that users that dont have ROLE_USER will not be able to access it and confirm that those with valid jwts can
+
+## 2026-04-04T17:13:58+02:00 [gpt-5.4 high]
+please commit, including _prompt.md
+

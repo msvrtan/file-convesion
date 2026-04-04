@@ -40,6 +40,7 @@ security:
     access_control:
         - { path: ^/auth/token$, roles: PUBLIC_ACCESS }
         - { path: ^/doc(?:\.json)?$, roles: PUBLIC_ACCESS }
+        - { path: ^/conversions(?:/.*)?$, roles: ROLE_CUSTOMER }
 
 when@test:
     security:
