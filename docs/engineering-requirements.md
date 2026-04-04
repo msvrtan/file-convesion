@@ -57,7 +57,7 @@ Based on the [business requirements](business-requirements.md), this document de
 
 ### Setup
 - **Makefile** sets up everything:
-  - `make reviewer` — runs full setup, setting up JWT keypairs, migrations,fixtures 
+  - `make reviewer` — runs full setup, setting up JWT keypairs, migrations, fixtures 
 - `symfony server:start` + Messenger worker — zero manual config
 - Pre-seeded JWT user — reviewer grabs a token immediately
 - Swagger UI available for interactive API exploration
