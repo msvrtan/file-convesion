@@ -78,7 +78,7 @@ Based on the [business requirements](business-requirements.md), this document de
 - **Conventional commits** (`feat:`, `fix:`, `chore:`, etc.)
 - **Feature branches** merged via PRs into `main`
 - Clean, readable history showing incremental progress
-- Most PR's will be squashed into a single commit for clarity, if detailed review is required just visit PR page (noted in commit message)
+- Most PRs will be squashed into a single commit for clarity, if detailed review is required just visit PR page (noted in commit message)
 
 ---
 
