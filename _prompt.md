@@ -40,3 +40,9 @@ add to makefile generating jwt keypair
 ## 2026-04-04T15:50:36+02:00 [gpt-5.4 high]
 create pr
 
+## 2026-04-04T16:06:10+02:00 [gpt-5.4 high]
+we will not be using /api namespace for as it is noted in engineering requirements
+
+## 2026-04-04T16:08:52+02:00 [gpt-5.4 high]
+commit and push
+
