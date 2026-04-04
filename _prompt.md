@@ -84,3 +84,9 @@ add security test that verifies that users that dont have ROLE_USER will not be 
 ## 2026-04-04T17:13:58+02:00 [gpt-5.4 high]
 please commit, including _prompt.md
 
+## 2026-04-04T17:39:49+02:00 [gpt-5.4 high]
+lets create reviewer make task that will create keypair, migrate both dev & test db, run fixtures on both
+
+## 2026-04-04T17:43:25+02:00 [gpt-5.4 high]
+commit and push
+
