@@ -46,3 +46,9 @@ we will not be using /api namespace for as it is noted in engineering requiremen
 ## 2026-04-04T16:08:52+02:00 [gpt-5.4 high]
 commit and push
 
+## 2026-04-04T16:13:13+02:00 [gpt-5.4 high]
+lets set up messenger to store messages using doctrine
+
+## 2026-04-04T16:20:02+02:00 [gpt-5.4 high]
+please commit
+

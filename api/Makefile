@@ -1,4 +1,4 @@
-.PHONY: lint fix analyse test jwt-keypair
+.PHONY: lint fix analyse test jwt-keypair messenger-setup-transports
 
 lint:
 	vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff
@@ -14,3 +14,6 @@ test:
 
 jwt-keypair:
 	php bin/console lexik:jwt:generate-keypair --skip-if-exists --no-interaction
+
+messenger-setup-transports:
+	php bin/console messenger:setup-transports --no-interaction
