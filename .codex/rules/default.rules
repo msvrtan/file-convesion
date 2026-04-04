@@ -1,0 +1,6 @@
+prefix_rule(
+    pattern = ["make"],
+    decision = "allow",
+    justification = "Allow make commands without prompting",
+    match = ["make fix"],
+)

@@ -52,3 +52,23 @@ lets set up messenger to store messages using doctrine
 ## 2026-04-04T16:20:02+02:00 [gpt-5.4 high]
 please commit
 
+## 2026-04-04T16:33:27+02:00 [gpt-5.4 high]
+please create customer entity (id: uuidv7,username: string, password: encrypted string), create repository and fixtures that should have 6 comany named usernames, with both id's and usernames hardocded as constants in there
+
+## 2026-04-04T16:38:00+02:00 [gpt-5.4 high]
+- create migration for customer
+- set up customer as user provider
+- add tests that customer can log in and recieve jwt token
+
+## 2026-04-04T16:42:02+02:00 [gpt-5.4 high]
+tests should not care about schema
+
+## 2026-04-04T16:47:20+02:00 [gpt-5.4 high]
+please make task in Makefile to delete test db, run migrations on test db, run fixtures on test db and call that task inside test before phpunit
+
+## 2026-04-04T16:51:34+02:00 [gpt-5.4 high]
+please commit
+
+## 2026-04-04T16:52:48+02:00 [gpt-5.4 high]
+no, commit all changes together
+
