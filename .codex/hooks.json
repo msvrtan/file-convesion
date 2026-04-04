@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'root=$(git rev-parse --show-toplevel 2>/dev/null || pwd); payload=$(cat); prompt=$(printf \"%s\" \"$payload\" | jq -r \".prompt // empty\"); model=$(printf \"%s\" \"$payload\" | jq -r \".model // \\\"unknown\\\"\"); effort=$(awk -F\\\" '\\''/^[[:space:]]*model_reasoning_effort[[:space:]]*=/{print $2; exit}'\\'' \"$root/.codex/config.toml\" 2>/dev/null); [ -n \"$effort\" ] || effort=$(awk -F\\\" '\\''/^[[:space:]]*model_reasoning_effort[[:space:]]*=/{print $2; exit}'\\'' \"$HOME/.codex/config.toml\" 2>/dev/null); [ -n \"$effort\" ] || effort=unknown; [ -n \"$prompt\" ] || exit 0; printf \"## %s [%s %s]\\n%s\\n\\n\" \"$(date -Is)\" \"$model\" \"$effort\" \"$prompt\" >> \"$root/_prompt.md\"'"
+          }
+        ]
+      }
+    ]
+  }
+}
