@@ -17,7 +17,10 @@ This project is a Symfony API for long-running file conversion jobs. It accepts 
 
 ### Installation
 
-@TODO
+```bash
+cd api
+make reviewer
+```
 
 ### Start the server
 
