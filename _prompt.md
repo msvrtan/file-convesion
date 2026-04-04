@@ -12,3 +12,6 @@ please set up phpstan to be extra strict and use all of the installed extensions
 ## 2026-04-04T15:33:18+02:00 [gpt-5.4 high]
 - phpstan should cover just src and tests folder\
 
+## 2026-04-04T15:35:29+02:00 [gpt-5.4 high]
+please create phpstan baseline file
+
