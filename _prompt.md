@@ -222,3 +222,12 @@ lets open AcceptConversion service and in the main method keep intension from en
 ## 2026-04-05T09:38:59+02:00 [gpt-5.4 high]
 commit
 
+## 2026-04-05T09:40:14+02:00 [gpt-5.4 high]
+create unit tests for AcceptConversion
+
+## 2026-04-05T09:42:05+02:00 [gpt-5.4 high]
+please create tests for each possible exception that service can throw
+
+## 2026-04-05T09:44:01+02:00 [gpt-5.4 high]
+commit
+
