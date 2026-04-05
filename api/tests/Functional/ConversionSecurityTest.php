@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ConversionSecurityTest extends WebTestCase
@@ -20,45 +20,57 @@ final class ConversionSecurityTest extends WebTestCase
         $this->client = self::createClient();
     }
 
-    /**
-     * @return array<string, array{0: string, 1: string}>
-     */
-    public static function conversionRoutes(): array
+    public function testInvalidJwtCannotAccessCreateConversion(): void
     {
-        return [
-            'create' => ['POST', '/conversions'],
-            'status' => ['GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2'],
-            'download' => ['GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2/download'],
-        ];
-    }
-
-    #[DataProvider('conversionRoutes')]
-    public function testCustomerWithoutRoleUserCannotAccessConversions(string $method, string $uri): void
-    {
-        $token = $this->createJwtToken(AppFixtures::GLOBEX_USERNAME);
-
-        $this->client->request(
-            $method,
-            $uri,
-            server: [
-                'HTTP_AUTHORIZATION' => 'Bearer wRoNgTokEn',
-            ],
-        );
+        $this->requestCreateConversion('Bearer wRoNgTokEn');
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
 
-    #[DataProvider('conversionRoutes')]
-    public function testCustomerWithRoleUserJwtCanAccessConversions(string $method, string $uri): void
+    public function testInvalidJwtCannotAccessConversionStatus(): void
+    {
+        $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2', 'Bearer wRoNgTokEn');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testInvalidJwtCannotAccessConversionDownload(): void
+    {
+        $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2/download', 'Bearer wRoNgTokEn');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testCustomerWithValidJwtCanCreateConversion(): void
     {
         $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
 
-        $this->client->request(
-            $method,
-            $uri,
-            server: [
-                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
-            ],
+        $this->requestCreateConversion(sprintf('Bearer %s', $token));
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testCustomerWithValidJwtCanViewConversionStatus(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->requestAuthenticated(
+            'GET',
+            '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2',
+            sprintf('Bearer %s', $token),
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testCustomerWithValidJwtCanDownloadConversion(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->requestAuthenticated(
+            'GET',
+            '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2/download',
+            sprintf('Bearer %s', $token),
         );
 
         self::assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -89,5 +101,44 @@ final class ConversionSecurityTest extends WebTestCase
         self::assertNotSame('', $payload['token']);
 
         return $payload['token'];
+    }
+
+    private function requestCreateConversion(string $authorization): void
+    {
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'json'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_AUTHORIZATION' => $authorization,
+            ],
+        );
+    }
+
+    private function requestAuthenticated(string $method, string $uri, string $authorization): void
+    {
+        $this->client->request(
+            $method,
+            $uri,
+            server: [
+                'HTTP_AUTHORIZATION' => $authorization,
+            ],
+        );
+    }
+
+    private static function createFixtureUpload(): UploadedFile
+    {
+        return new UploadedFile(
+            self::fixturePath('sample.csv'),
+            'sample.csv',
+            'text/csv',
+            test: true,
+        );
+    }
+
+    private static function fixturePath(string $filename): string
+    {
+        return dirname(__DIR__).'/Fixtures/'.$filename;
     }
 }

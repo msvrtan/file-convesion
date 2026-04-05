@@ -108,3 +108,36 @@ create data about 10 countries in the world and add 5-10 columns
 take that data and store it as csv,xml,json, xslx and ods
 name them sample.{extension}
 
+## 2026-04-04T19:50:24+02:00 [gpt-5.4 high]
+please add validation on ConversionRequest where file must exist and have extension csv,json,xslx,ods
+
+## 2026-04-04T19:51:01+02:00 [gpt-5.4 high]
+source format must be one of those extensions too
+
+## 2026-04-04T19:51:15+02:00 [gpt-5.4 high]
+target format must be json or xml
+
+## 2026-04-04T20:06:19+02:00 [gpt-5.4 high]
+please update security test to include uploaded file with csv extension and has targetFormat defined as json
+
+## 2026-04-04T20:11:08+02:00 [gpt-5.4 high]
+please rewrite security tests so that payloads to POST /conversions include csv file and targetFormat 'json'
+
+## 2026-04-04T20:15:24+02:00 [gpt-5.4 high]
+please sort out phpstan complaints
+
+## 2026-04-04T20:25:09+02:00 [gpt-5.4 high]
+lets remove data providers and make tests clean and understandable
+
+## 2026-04-04T20:28:26+02:00 [gpt-5.4 high]
+please add functional test, setting up happy path for accept endpoint
+
+## 2026-04-04T20:40:02+02:00 [gpt-5.4 high]
+finish up test
+
+## 2026-04-05T07:39:47+02:00 [gpt-5.4 high]
+use sample files in ConversionSecurityTest
+
+## 2026-04-05T07:40:23+02:00 [gpt-5.4 high]
+same in ConversionAcceptTest
+
