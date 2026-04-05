@@ -61,7 +61,7 @@ final class AcceptConversion
         /** @var UploadedFile $uploadedFile */
         $uploadedFile = $request->file;
         $tempPath = $uploadedFile->getPathname();
-        $sourcePath = \sprintf('uploads/%s/%s.%s', $request->ownerId, $request->id, $request->sourceFormat);
+        $sourcePath = $this->sourcePath($request);
         $stream = fopen($tempPath, 'rb');
 
         if (false === $stream) {
