@@ -22,7 +22,7 @@ use Symfony\Component\Uid\UuidV7;
 final class ConversionController extends AbstractController
 {
     public function __construct(
-        public SerializerInterface $serializer,
+        private SerializerInterface $serializer,
         private RequestResolver $requestResolver,
         private AcceptConversion $acceptConversion,
     ) {
