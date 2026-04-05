@@ -77,18 +77,19 @@ final class ConversionController extends AbstractController
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
     }
 
-    /**
-     * @throws BadRequest
-     */
     private function resolveResponseMediaType(Request $httpRequest): string
     {
-        $acceptHeader = $httpRequest->headers->get('Accept');
+        foreach ($httpRequest->getAcceptableContentTypes() as $acceptableContentType) {
+            if ('application/xml' === $acceptableContentType) {
+                return 'application/xml';
+            }
 
-        return match ($acceptHeader) {
-            'application/json' => 'application/json',
-            'application/xml' => 'application/xml',
-            default => throw new BadRequest(sprintf('Missing or invalid Accept header. Expected one of: [application/json, application/xml] but got [%s].', $acceptHeader ?? 'null')),
-        };
+            if ('application/json' === $acceptableContentType || '*/*' === $acceptableContentType) {
+                return 'application/json';
+            }
+        }
+
+        return 'application/json';
     }
 
     /**

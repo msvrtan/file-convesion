@@ -108,7 +108,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertSame(AppFixtures::ACME_ID, (string) $message->getOwnerId());
     }
 
-    public function testBadRequestDefaultsToJsonWhenAcceptHeaderIsMissing(): void
+    public function testHappyPathDefaultsToJsonWhenAcceptHeaderIsMissing(): void
     {
         $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
 
@@ -122,17 +122,73 @@ final class ConversionAcceptTest extends WebTestCase
             ],
         );
 
-        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
         self::assertResponseHeaderSame('content-type', 'application/json');
 
         $content = $this->client->getResponse()->getContent();
         self::assertIsString($content);
 
-        /** @var array{message?: mixed} $payload */
+        /** @var array{id?: mixed, status?: mixed} $payload */
         $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertIsString($payload['message'] ?? null);
-        self::assertStringContainsString('Missing or invalid Accept header', $payload['message']);
+        self::assertIsString($payload['id'] ?? null);
+        self::assertSame('accepted', $payload['status'] ?? null);
+    }
+
+    public function testHappyPathDefaultsToJsonWhenAcceptHeaderIsWildcard(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'xml'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_ACCEPT' => '*/*',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{id?: mixed, status?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertIsString($payload['id'] ?? null);
+        self::assertSame('accepted', $payload['status'] ?? null);
+    }
+
+    public function testHappyPathDefaultsToJsonWhenAcceptHeaderContainsMultipleValues(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'xml'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_ACCEPT' => 'application/json, */*',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{id?: mixed, status?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertIsString($payload['id'] ?? null);
+        self::assertSame('accepted', $payload['status'] ?? null);
     }
 
     public function testBadRequestUsesXmlWhenAcceptHeaderRequestsXml(): void

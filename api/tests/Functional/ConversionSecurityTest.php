@@ -47,7 +47,8 @@ final class ConversionSecurityTest extends WebTestCase
 
         $this->requestCreateConversion(sprintf('Bearer %s', $token));
 
-        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
+        self::assertResponseHeaderSame('content-type', 'application/json');
     }
 
     public function testCustomerWithValidJwtCanViewConversionStatus(): void
