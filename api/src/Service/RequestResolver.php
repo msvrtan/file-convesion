@@ -23,8 +23,13 @@ final class RequestResolver
      */
     public function convertRequest(Request $httpRequest, Uuid $id, Uuid $ownerId): ConversionRequest
     {
-        /** @var UploadedFile|null $file */
+        /** @var UploadedFile|array<mixed,mixed>|null $file */
         $file = $httpRequest->files->get('file');
+
+        if (is_array($file)) {
+            throw new BadRequest('Only a single file upload is supported.');
+        }
+
         $targetFormat = (string) $httpRequest->request->get('targetFormat');
 
         $request = new ConversionRequest($id, $ownerId, $file, $targetFormat);

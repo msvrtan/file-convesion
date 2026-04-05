@@ -80,6 +80,24 @@ final class RequestResolverTest extends TestCase
         self::assertSame('sample.oDs', $conversionRequest->file?->getClientOriginalName());
     }
 
+    public function testItThrowsBadRequestForArrayShapedFileInput(): void
+    {
+        $request = new Request(
+            request: ['targetFormat' => 'xml'],
+            files: [
+                'file' => [
+                    self::createFixtureUpload(),
+                    self::createFixtureUpload('sample.csv'),
+                ],
+            ],
+        );
+
+        $this->expectException(BadRequest::class);
+        $this->expectExceptionMessage('Only a single file upload is supported.');
+
+        $this->requestResolver->convertRequest($request, new UuidV7(), new UuidV7());
+    }
+
     private function createValidator(): ValidatorInterface
     {
         return Validation::createValidatorBuilder()

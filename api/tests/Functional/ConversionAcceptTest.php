@@ -220,6 +220,38 @@ final class ConversionAcceptTest extends WebTestCase
         );
     }
 
+    public function testBadRequestIsReturnedForArrayShapedFileInput(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'xml'],
+            [
+                'file' => [
+                    self::createFixtureUpload(),
+                    self::createFixtureUpload('sample.csv', 'sample.csv', 'text/csv'),
+                ],
+            ],
+            server: [
+                'HTTP_ACCEPT' => 'application/json',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{message?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Only a single file upload is supported.', $payload['message'] ?? null);
+    }
+
     private function createJwtToken(string $username): string
     {
         $this->client->request(
@@ -247,12 +279,15 @@ final class ConversionAcceptTest extends WebTestCase
         return $payload['token'];
     }
 
-    private static function createFixtureUpload(): UploadedFile
-    {
+    private static function createFixtureUpload(
+        string $fixtureName = 'sample.json',
+        ?string $clientName = null,
+        string $mimeType = 'application/json',
+    ): UploadedFile {
         return new UploadedFile(
-            self::fixturePath('sample.json'),
-            'sample.json',
-            'application/json',
+            self::fixturePath($fixtureName),
+            $clientName ?? $fixtureName,
+            $mimeType,
             test: true,
         );
     }
