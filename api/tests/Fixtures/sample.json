@@ -1,0 +1,112 @@
+[
+  {
+    "country": "Croatia",
+    "iso2": "HR",
+    "iso3": "HRV",
+    "capital": "Zagreb",
+    "continent": "Europe",
+    "population_millions": 3.9,
+    "area_km2": 56594,
+    "currency": "EUR",
+    "official_language": "Croatian"
+  },
+  {
+    "country": "Japan",
+    "iso2": "JP",
+    "iso3": "JPN",
+    "capital": "Tokyo",
+    "continent": "Asia",
+    "population_millions": 123.3,
+    "area_km2": 377975,
+    "currency": "JPY",
+    "official_language": "Japanese"
+  },
+  {
+    "country": "Brazil",
+    "iso2": "BR",
+    "iso3": "BRA",
+    "capital": "Brasilia",
+    "continent": "South America",
+    "population_millions": 203.1,
+    "area_km2": 8515767,
+    "currency": "BRL",
+    "official_language": "Portuguese"
+  },
+  {
+    "country": "Canada",
+    "iso2": "CA",
+    "iso3": "CAN",
+    "capital": "Ottawa",
+    "continent": "North America",
+    "population_millions": 41.0,
+    "area_km2": 9984670,
+    "currency": "CAD",
+    "official_language": "English and French"
+  },
+  {
+    "country": "Kenya",
+    "iso2": "KE",
+    "iso3": "KEN",
+    "capital": "Nairobi",
+    "continent": "Africa",
+    "population_millions": 55.3,
+    "area_km2": 580367,
+    "currency": "KES",
+    "official_language": "Swahili and English"
+  },
+  {
+    "country": "Australia",
+    "iso2": "AU",
+    "iso3": "AUS",
+    "capital": "Canberra",
+    "continent": "Oceania",
+    "population_millions": 27.1,
+    "area_km2": 7692024,
+    "currency": "AUD",
+    "official_language": "English"
+  },
+  {
+    "country": "India",
+    "iso2": "IN",
+    "iso3": "IND",
+    "capital": "New Delhi",
+    "continent": "Asia",
+    "population_millions": 1430.0,
+    "area_km2": 3287263,
+    "currency": "INR",
+    "official_language": "Hindi and English"
+  },
+  {
+    "country": "Germany",
+    "iso2": "DE",
+    "iso3": "DEU",
+    "capital": "Berlin",
+    "continent": "Europe",
+    "population_millions": 84.4,
+    "area_km2": 357588,
+    "currency": "EUR",
+    "official_language": "German"
+  },
+  {
+    "country": "Mexico",
+    "iso2": "MX",
+    "iso3": "MEX",
+    "capital": "Mexico City",
+    "continent": "North America",
+    "population_millions": 129.5,
+    "area_km2": 1964375,
+    "currency": "MXN",
+    "official_language": "Spanish"
+  },
+  {
+    "country": "South Africa",
+    "iso2": "ZA",
+    "iso3": "ZAF",
+    "capital": "Pretoria",
+    "continent": "Africa",
+    "population_millions": 62.0,
+    "area_km2": 1221037,
+    "currency": "ZAR",
+    "official_language": "Xitsonga, Zulu, and 9 others"
+  }
+]
