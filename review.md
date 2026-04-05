@@ -1,49 +1,29 @@
 # Review Notes
 
-## P1: Default unsupported `Accept` headers to JSON
+## P2: Reject array-valued `file` inputs before constructing `ConversionRequest`
 
 File:
-`api/src/Controller/ConversionController.php`
+`api/src/Service/RequestResolver.php`
 
 Problem:
-The current `Accept` handling requires an exact match for `application/json` or `application/xml`. Requests with missing headers or common values such as `*/*` or `application/json, */*` are rejected with `400`.
+`RequestResolver::convertRequest()` assumes `$httpRequest->files->get('file')` is either an `UploadedFile` or `null`, but Symfony returns an array for malformed multipart shapes such as `file[]`. That currently causes a `TypeError` and a `500` response instead of a proper `400`.
 
 Action:
-- Change response media type resolution to default to JSON when the `Accept` header is missing or unsupported.
-- Accept normal multi-value headers instead of requiring one exact string.
-- Keep XML support when the client explicitly requests XML.
-- Add tests for missing `Accept`, `*/*`, and multi-value `Accept` headers.
+- Guard against array-valued `file` inputs before building `ConversionRequest`.
+- Treat malformed multipart file payloads as bad requests.
+- Raise the existing bad-request flow instead of letting a `TypeError` escape.
+- Add tests for `file[]` or other array-shaped `file` payloads to confirm the endpoint returns `400`.
 
-## P1: Prevent partial durable state in `AcceptConversion`
+## P2: Parse `Accept` headers consistently for bad-request responses
 
 File:
-`api/src/Service/AcceptConversion.php`
+`api/src/EventSubscriber/BadRequestSubscriber.php`
 
 Problem:
-The service performs three side effects in sequence:
-1. move file to storage
-2. save conversion entity
-3. dispatch queue message
-
-If step 2 or 3 fails, earlier side effects remain persisted and the request still returns `500`, which can leave orphaned files or accepted conversions without queued work.
+`BadRequestSubscriber::resolveResponseMediaType()` matches the raw `Accept` header string exactly, so requests with standard multi-value or weighted XML headers such as `application/xml, */*` or `application/xml;q=0.9,application/json;q=0.8` still receive JSON error bodies.
 
 Action:
-- Introduce rollback/cleanup when a later step fails.
-- At minimum:
-  - delete the stored file if database save fails
-  - delete the stored file and persisted conversion if message dispatch fails
-- Prefer a design that makes the operation atomic from the caller’s perspective.
-- Add unit tests for cleanup behavior on database and messenger failures.
-
-## P2: Normalize uploaded file extension before validation
-
-File:
-`api/src/Model/ConversionRequest.php`
-
-Problem:
-`getClientOriginalExtension()` preserves client casing, so valid uploads such as `report.CSV` or `sheet.XLSX` produce uppercase `sourceFormat` values that fail the `Choice` constraint.
-
-Action:
-- Normalize the extracted extension to lowercase before assigning `sourceFormat`.
-- Keep existing validation rules unchanged after normalization.
-- Add tests for uppercase and mixed-case input filenames.
+- Reuse the same `Accept` parsing behavior as the controller success path.
+- Honor XML preference for multi-value and weighted XML `Accept` headers.
+- Keep JSON as the fallback when the header is missing or unsupported.
+- Add tests that verify bad-request responses return XML for multi-value and weighted XML `Accept` headers.
