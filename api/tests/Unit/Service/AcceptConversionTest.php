@@ -33,7 +33,7 @@ final class AcceptConversionTest extends TestCase
         $this->defaultStorage = $this->createMock(FilesystemOperator::class);
         $this->conversionRepository = $this->getMockBuilder(ConversionRepository::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['save'])
+            ->onlyMethods(['save', 'delete'])
             ->getMock();
         $this->messageBus = $this->createMock(MessageBusInterface::class);
 
@@ -73,6 +73,7 @@ final class AcceptConversionTest extends TestCase
 
                 return true;
             }));
+        $this->conversionRepository->expects(self::never())->method('delete');
 
         $this->messageBus->expects(self::once())
             ->method('dispatch')
@@ -101,7 +102,9 @@ final class AcceptConversionTest extends TestCase
         $this->defaultStorage->expects(self::once())
             ->method('writeStream')
             ->willThrowException($exception);
+        $this->defaultStorage->expects(self::never())->method('delete');
         $this->conversionRepository->expects(self::never())->method('save');
+        $this->conversionRepository->expects(self::never())->method('delete');
         $this->messageBus->expects(self::never())->method('dispatch');
 
         $this->expectExceptionObject($exception);
@@ -117,7 +120,9 @@ final class AcceptConversionTest extends TestCase
         $request->file = $uploadedFile;
 
         $this->defaultStorage->expects(self::never())->method('writeStream');
+        $this->defaultStorage->expects(self::never())->method('delete');
         $this->conversionRepository->expects(self::never())->method('save');
+        $this->conversionRepository->expects(self::never())->method('delete');
         $this->messageBus->expects(self::never())->method('dispatch');
 
         set_error_handler(static fn (): true => true);
@@ -138,10 +143,16 @@ final class AcceptConversionTest extends TestCase
         $exception = new class('ORM failure.') extends \RuntimeException implements ORMException {
         };
 
+        $sourcePath = sprintf('uploads/%s/%s.json', $request->ownerId, $request->id);
+
         $this->defaultStorage->expects(self::once())->method('writeStream');
+        $this->defaultStorage->expects(self::once())
+            ->method('delete')
+            ->with($sourcePath);
         $this->conversionRepository->expects(self::once())
             ->method('save')
             ->willThrowException($exception);
+        $this->conversionRepository->expects(self::never())->method('delete');
         $this->messageBus->expects(self::never())->method('dispatch');
 
         $this->expectExceptionObject($exception);
@@ -154,10 +165,16 @@ final class AcceptConversionTest extends TestCase
         $request = self::createConversionRequest();
         $exception = new OptimisticLockException('Optimistic lock failure.', null);
 
+        $sourcePath = sprintf('uploads/%s/%s.json', $request->ownerId, $request->id);
+
         $this->defaultStorage->expects(self::once())->method('writeStream');
+        $this->defaultStorage->expects(self::once())
+            ->method('delete')
+            ->with($sourcePath);
         $this->conversionRepository->expects(self::once())
             ->method('save')
             ->willThrowException($exception);
+        $this->conversionRepository->expects(self::never())->method('delete');
         $this->messageBus->expects(self::never())->method('dispatch');
 
         $this->expectExceptionObject($exception);
@@ -171,8 +188,21 @@ final class AcceptConversionTest extends TestCase
         $exception = new class('Dispatch failure.') extends \RuntimeException implements ExceptionInterface {
         };
 
+        $sourcePath = sprintf('uploads/%s/%s.json', $request->ownerId, $request->id);
+
         $this->defaultStorage->expects(self::once())->method('writeStream');
+        $this->defaultStorage->expects(self::once())
+            ->method('delete')
+            ->with($sourcePath);
         $this->conversionRepository->expects(self::once())->method('save');
+        $this->conversionRepository->expects(self::once())
+            ->method('delete')
+            ->with(self::callback(static function (Conversion $conversion) use ($request): bool {
+                self::assertSame($request->id, $conversion->getId());
+                self::assertSame($request->ownerId, $conversion->getOwnerId());
+
+                return true;
+            }));
         $this->messageBus->expects(self::once())
             ->method('dispatch')
             ->willThrowException($exception);

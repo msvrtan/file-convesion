@@ -36,4 +36,11 @@ class ConversionRepository extends ServiceEntityRepository
         $entityManager->persist($conversion);
         $entityManager->flush();
     }
+
+    public function delete(Conversion $conversion): void
+    {
+        $entityManager = $this->getEntityManager();
+        $entityManager->remove($conversion);
+        $entityManager->flush();
+    }
 }

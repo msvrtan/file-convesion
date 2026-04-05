@@ -32,9 +32,22 @@ final class AcceptConversion
     {
         $this->moveFileToUploadSection($request);
 
-        $entity = $this->buildAndSaveConversion($request);
+        try {
+            $entity = $this->buildAndSaveConversion($request);
+        } catch (\Doctrine\ORM\Exception\ORMException|\Doctrine\ORM\OptimisticLockException $exception) {
+            $this->deleteUploadedFile($request);
 
-        $this->publishConversion($entity);
+            throw $exception;
+        }
+
+        try {
+            $this->publishConversion($entity);
+        } catch (\Symfony\Component\Messenger\Exception\ExceptionInterface $exception) {
+            $this->deleteUploadedFile($request);
+            $this->conversionRepository->delete($entity);
+
+            throw $exception;
+        }
 
         return $entity;
     }
@@ -63,6 +76,14 @@ final class AcceptConversion
     }
 
     /**
+     * @throws \League\Flysystem\FilesystemException
+     */
+    private function deleteUploadedFile(ConversionRequest $request): void
+    {
+        $this->defaultStorage->delete($this->sourcePath($request));
+    }
+
+    /**
      * @throws \Doctrine\ORM\Exception\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
@@ -87,5 +108,10 @@ final class AcceptConversion
     {
         $message = new ConvertFile($conversion->getId(), $conversion->getOwnerId());
         $this->messageBus->dispatch($message);
+    }
+
+    private function sourcePath(ConversionRequest $request): string
+    {
+        return \sprintf('uploads/%s/%s.%s', $request->ownerId, $request->id, $request->sourceFormat);
     }
 }
