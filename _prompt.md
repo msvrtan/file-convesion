@@ -141,3 +141,15 @@ use sample files in ConversionSecurityTest
 ## 2026-04-05T07:40:23+02:00 [gpt-5.4 high]
 same in ConversionAcceptTest
 
+## 2026-04-05T07:55:09+02:00 [gpt-5.4 high]
+please create conversion entity, id: Uuid, ownerId: Uuid, sourceFormat: string, targetFormat: string, message as ?string, createdAt as DateTime, processingStartedAt as ?DateTime, processingEndedAt as ?DateTime
+
+## 2026-04-05T07:57:45+02:00 [gpt-5.4 high]
+create load method in repository that takes both id and ownerId
+
+## 2026-04-05T07:58:05+02:00 [gpt-5.4 high]
+create save method in repo that calls persist and then flush
+
+## 2026-04-05T07:58:36+02:00 [gpt-5.4 high]
+please commit
+
