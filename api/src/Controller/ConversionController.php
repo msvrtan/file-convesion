@@ -53,14 +53,12 @@ final class ConversionController extends AbstractController
 
         $this->publishConversion($entity);
 
-        return $this->serializeResponse(
-            [
-                'id' => (string) $id,
-                'status' => 'accepted',
-            ],
-            $responseMediaType,
-            Response::HTTP_ACCEPTED,
-        );
+        $payload = [
+            'id' => $entity->getId()->toRfc4122(),
+            'status' => $entity->getStatus()->asString(),
+        ];
+
+        return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_ACCEPTED);
     }
 
     #[Route('/conversions/{id}', name: 'conversion_status', methods: ['GET'])]
