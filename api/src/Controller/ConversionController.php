@@ -79,21 +79,7 @@ final class ConversionController extends AbstractController
         $id = new UuidV7();
         $ownerId = $customer->getId();
 
-        /** @var UploadedFile $uploadedFile */
-        $uploadedFile = $request->file;
-        $tempPath = $uploadedFile->getPathname();
-        $sourcePath = \sprintf('uploads/%s/%s.%s', $ownerId, $id, $request->sourceFormat);
-        $stream = fopen($tempPath, 'r');
-
-        if (false === $stream) {
-            throw new \RuntimeException('Unable to open uploaded file.');
-        }
-
-        $this->defaultStorage->writeStream($sourcePath, $stream);
-
-        if (\is_resource($stream)) {
-            fclose($stream);
-        }
+        $this->moveFileToUploadSection($id, $ownerId, $request);
 
         $entity = $this->buildAndSaveConversion($id, $ownerId, $request);
 
@@ -134,6 +120,25 @@ final class ConversionController extends AbstractController
         $content = $this->serializer->serialize($data, $serializerFormat);
 
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
+    }
+
+    private function moveFileToUploadSection(Uuid $id, Uuid $ownerId, ConversionRequest $request): void
+    {
+        /** @var UploadedFile $uploadedFile */
+        $uploadedFile = $request->file;
+        $tempPath = $uploadedFile->getPathname();
+        $sourcePath = \sprintf('uploads/%s/%s.%s', $ownerId, $id, $request->sourceFormat);
+        $stream = fopen($tempPath, 'r');
+
+        if (false === $stream) {
+            throw new \RuntimeException('Unable to open uploaded file.');
+        }
+
+        $this->defaultStorage->writeStream($sourcePath, $stream);
+
+        if (\is_resource($stream)) {
+            fclose($stream);
+        }
     }
 
     /**
