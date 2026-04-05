@@ -122,6 +122,10 @@ final class ConversionController extends AbstractController
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
     }
 
+    /**
+     * @throws \League\Flysystem\FilesystemException
+     * @throws \RuntimeException
+     */
     private function moveFileToUploadSection(Uuid $id, Uuid $ownerId, ConversionRequest $request): void
     {
         /** @var UploadedFile $uploadedFile */
