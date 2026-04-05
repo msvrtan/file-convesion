@@ -220,6 +220,64 @@ final class ConversionAcceptTest extends WebTestCase
         );
     }
 
+    public function testBadRequestUsesXmlWhenAcceptHeaderContainsMultipleValues(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'yaml'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_ACCEPT' => 'application/xml, */*',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertResponseHeaderSame('content-type', 'application/xml');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $payload = simplexml_load_string($content);
+        self::assertInstanceOf(\SimpleXMLElement::class, $payload);
+        self::assertSame(
+            'Supported target formats are json, xml.',
+            (string) $payload->message,
+        );
+    }
+
+    public function testBadRequestUsesXmlWhenAcceptHeaderContainsWeightedXml(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'yaml'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_ACCEPT' => 'application/xml;q=0.9,application/json;q=0.8',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertResponseHeaderSame('content-type', 'application/xml');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $payload = simplexml_load_string($content);
+        self::assertInstanceOf(\SimpleXMLElement::class, $payload);
+        self::assertSame(
+            'Supported target formats are json, xml.',
+            (string) $payload->message,
+        );
+    }
+
     public function testBadRequestIsReturnedForArrayShapedFileInput(): void
     {
         $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);

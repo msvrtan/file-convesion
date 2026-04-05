@@ -52,10 +52,16 @@ final class BadRequestSubscriber implements EventSubscriberInterface
 
     private function resolveResponseMediaType(Request $request): string
     {
-        return match ($request->headers->get('Accept')) {
-            'application/xml' => 'application/xml',
-            'application/json' => 'application/json',
-            default => 'application/json',
-        };
+        foreach ($request->getAcceptableContentTypes() as $acceptableContentType) {
+            if ('application/xml' === $acceptableContentType) {
+                return 'application/xml';
+            }
+
+            if ('application/json' === $acceptableContentType || '*/*' === $acceptableContentType) {
+                return 'application/json';
+            }
+        }
+
+        return 'application/json';
     }
 }
