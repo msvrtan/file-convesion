@@ -216,7 +216,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertInstanceOf(\SimpleXMLElement::class, $payload);
         self::assertSame(
             'Supported target formats are json, xml.',
-            (string) $payload->message,
+            self::normalizeXmlText((string) $payload->message),
         );
     }
 
@@ -245,7 +245,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertInstanceOf(\SimpleXMLElement::class, $payload);
         self::assertSame(
             'Supported target formats are json, xml.',
-            (string) $payload->message,
+            self::normalizeXmlText((string) $payload->message),
         );
     }
 
@@ -274,7 +274,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertInstanceOf(\SimpleXMLElement::class, $payload);
         self::assertSame(
             'Supported target formats are json, xml.',
-            (string) $payload->message,
+            self::normalizeXmlText((string) $payload->message),
         );
     }
 
@@ -358,5 +358,10 @@ final class ConversionAcceptTest extends WebTestCase
     private static function storagePath(string $filename): string
     {
         return dirname(__DIR__, 2).'/var/storage/default/'.$filename;
+    }
+
+    private static function normalizeXmlText(string $value): string
+    {
+        return trim(str_replace(["\r", "\n", '\r', '\n'], '', $value));
     }
 }

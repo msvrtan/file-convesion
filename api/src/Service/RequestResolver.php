@@ -39,7 +39,7 @@ final class RequestResolver
         if (count($errors) > 0) {
             $errorMessage = '';
             foreach ($errors as $error) {
-                $errorMessage .= (string) $error->getMessage();
+                $errorMessage .= sprintf("%s\n", $error->getMessage());
             }
 
             throw new BadRequest($errorMessage);
