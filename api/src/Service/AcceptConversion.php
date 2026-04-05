@@ -62,7 +62,7 @@ final class AcceptConversion
         $uploadedFile = $request->file;
         $tempPath = $uploadedFile->getPathname();
         $sourcePath = \sprintf('uploads/%s/%s.%s', $request->ownerId, $request->id, $request->sourceFormat);
-        $stream = fopen($tempPath, 'r');
+        $stream = fopen($tempPath, 'rb');
 
         if (false === $stream) {
             throw new \RuntimeException('Unable to open uploaded file.');
