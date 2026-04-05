@@ -40,16 +40,16 @@ final class ConversionController extends AbstractController
         Request $httpRequest,
         #[CurrentUser] Customer $customer,
     ): Response {
-        $request = $this->convertRequest($httpRequest);
-
-        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
-
         $id = new UuidV7();
         $ownerId = $customer->getId();
 
-        $this->moveFileToUploadSection($id, $ownerId, $request);
+        $request = $this->convertRequest($httpRequest, $id, $ownerId);
 
-        $entity = $this->buildAndSaveConversion($id, $ownerId, $request);
+        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
+
+        $this->moveFileToUploadSection($request);
+
+        $entity = $this->buildAndSaveConversion($request);
 
         $this->publishConversion($entity);
 
@@ -105,20 +105,20 @@ final class ConversionController extends AbstractController
     /**
      * @throws BadRequest
      */
-    private function convertRequest(Request $httpRequest): ConversionRequest
+    private function convertRequest(Request $httpRequest, Uuid $id, Uuid $ownerId): ConversionRequest
     {
         /** @var UploadedFile|null $file */
         $file = $httpRequest->files->get('file');
         $targetFormat = (string) $httpRequest->request->get('targetFormat');
 
-        $request = new ConversionRequest($file, $targetFormat);
+        $request = new ConversionRequest($id, $ownerId, $file, $targetFormat);
 
         $errors = $this->validator->validate($request);
 
         if (count($errors) > 0) {
             $errorMessage = '';
             foreach ($errors as $error) {
-                $errorMessage .= (string) $error->getMessage();
+                $errorMessage .= $error->getMessage();
             }
 
             throw new BadRequest($errorMessage);
@@ -131,12 +131,12 @@ final class ConversionController extends AbstractController
      * @throws \League\Flysystem\FilesystemException
      * @throws \RuntimeException
      */
-    private function moveFileToUploadSection(Uuid $id, Uuid $ownerId, ConversionRequest $request): void
+    private function moveFileToUploadSection(ConversionRequest $request): void
     {
         /** @var UploadedFile $uploadedFile */
         $uploadedFile = $request->file;
         $tempPath = $uploadedFile->getPathname();
-        $sourcePath = \sprintf('uploads/%s/%s.%s', $ownerId, $id, $request->sourceFormat);
+        $sourcePath = \sprintf('uploads/%s/%s.%s', $request->ownerId, $request->id, $request->sourceFormat);
         $stream = fopen($tempPath, 'r');
 
         if (false === $stream) {
@@ -154,11 +154,11 @@ final class ConversionController extends AbstractController
      * @throws \Doctrine\ORM\Exception\ORMException
      * @throws \Doctrine\ORM\OptimisticLockException
      */
-    private function buildAndSaveConversion(Uuid $id, Uuid $ownerId, ConversionRequest $request): Conversion
+    private function buildAndSaveConversion(ConversionRequest $request): Conversion
     {
         $entity = new Conversion(
-            id: $id,
-            ownerId: $ownerId,
+            id: $request->id,
+            ownerId: $request->ownerId,
             sourceFormat: $request->sourceFormat,
             targetFormat: $request->targetFormat,
         );

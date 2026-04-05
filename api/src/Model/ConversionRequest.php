@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Model;
 
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class ConversionRequest
@@ -32,6 +33,8 @@ class ConversionRequest
     public string $targetFormat;
 
     public function __construct(
+        public readonly Uuid $id,
+        public readonly Uuid $ownerId,
         ?UploadedFile $file,
         string $targetFormat,
     ) {
