@@ -68,10 +68,12 @@ final class AcceptConversion
             throw new \RuntimeException('Unable to open uploaded file.');
         }
 
-        $this->defaultStorage->writeStream($sourcePath, $stream);
-
-        if (\is_resource($stream)) {
-            fclose($stream);
+        try {
+            $this->defaultStorage->writeStream($sourcePath, $stream);
+        } finally {
+            if (\is_resource($stream)) {
+                fclose($stream);
+            }
         }
     }
 
