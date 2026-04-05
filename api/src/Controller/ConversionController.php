@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Conversion;
 use App\Entity\Customer;
 use App\Model\BadRequest;
 use App\Model\ConversionRequest;
-use App\Model\ConvertFile;
-use App\Repository\ConversionRepository;
+use App\Service\AcceptConversion;
 use App\Service\RequestResolver;
-use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -28,10 +23,8 @@ final class ConversionController extends AbstractController
 {
     public function __construct(
         public SerializerInterface $serializer,
-        private FilesystemOperator $defaultStorage,
-        private ConversionRepository $conversionRepository,
-        private MessageBusInterface $messageBus,
         private RequestResolver $requestResolver,
+        private AcceptConversion $acceptConversion,
     ) {
     }
 
@@ -47,11 +40,7 @@ final class ConversionController extends AbstractController
 
         $responseMediaType = $this->resolveResponseMediaType($httpRequest);
 
-        $this->moveFileToUploadSection($request);
-
-        $entity = $this->buildAndSaveConversion($request);
-
-        $this->publishConversion($entity);
+        $entity = $this->acceptConversion->accept($request);
 
         $payload = [
             'id' => $entity->getId()->toRfc4122(),
@@ -108,55 +97,5 @@ final class ConversionController extends AbstractController
     private function convertRequest(Request $httpRequest, Uuid $id, Uuid $ownerId): ConversionRequest
     {
         return $this->requestResolver->convertRequest($httpRequest, $id, $ownerId);
-    }
-
-    /**
-     * @throws \League\Flysystem\FilesystemException
-     * @throws \RuntimeException
-     */
-    private function moveFileToUploadSection(ConversionRequest $request): void
-    {
-        /** @var UploadedFile $uploadedFile */
-        $uploadedFile = $request->file;
-        $tempPath = $uploadedFile->getPathname();
-        $sourcePath = \sprintf('uploads/%s/%s.%s', $request->ownerId, $request->id, $request->sourceFormat);
-        $stream = fopen($tempPath, 'r');
-
-        if (false === $stream) {
-            throw new \RuntimeException('Unable to open uploaded file.');
-        }
-
-        $this->defaultStorage->writeStream($sourcePath, $stream);
-
-        if (\is_resource($stream)) {
-            fclose($stream);
-        }
-    }
-
-    /**
-     * @throws \Doctrine\ORM\Exception\ORMException
-     * @throws \Doctrine\ORM\OptimisticLockException
-     */
-    private function buildAndSaveConversion(ConversionRequest $request): Conversion
-    {
-        $entity = new Conversion(
-            id: $request->id,
-            ownerId: $request->ownerId,
-            sourceFormat: $request->sourceFormat,
-            targetFormat: $request->targetFormat,
-        );
-
-        $this->conversionRepository->save($entity);
-
-        return $entity;
-    }
-
-    /**
-     * @throws \Symfony\Component\Messenger\Exception\ExceptionInterface
-     */
-    private function publishConversion(Conversion $conversion): void
-    {
-        $message = new ConvertFile($conversion->getId(), $conversion->getOwnerId());
-        $this->messageBus->dispatch($message);
     }
 }

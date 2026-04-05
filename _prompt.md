@@ -216,3 +216,9 @@ please create unit tests for RequestResolver
 ## 2026-04-05T09:34:55+02:00 [gpt-5.4 high]
 commit
 
+## 2026-04-05T09:37:24+02:00 [gpt-5.4 high]
+lets open AcceptConversion service and in the main method keep intension from endpoint and do all 3 steps as implementation level like now
+
+## 2026-04-05T09:38:59+02:00 [gpt-5.4 high]
+commit
+
