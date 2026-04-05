@@ -103,8 +103,7 @@ final class ConversionController extends AbstractController
 
         $this->conversionRepository->save($entity);
 
-        $message = new ConvertFile($id, $ownerId);
-        $this->messageBus->dispatch($message);
+        $this->publishConversion($entity);
 
         return $this->serializeResponse(
             [
@@ -141,5 +140,11 @@ final class ConversionController extends AbstractController
         $content = $this->serializer->serialize($data, $serializerFormat);
 
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
+    }
+
+    private function publishConversion(Conversion $conversion): void
+    {
+        $message = new ConvertFile($conversion->getId(), $conversion->getOwnerId());
+        $this->messageBus->dispatch($message);
     }
 }
