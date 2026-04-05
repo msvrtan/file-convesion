@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Conversion;
 use App\Entity\Customer;
 use App\Model\ConversionRequest;
+use App\Repository\ConversionRepository;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -24,6 +26,7 @@ final class ConversionController extends AbstractController
         public ValidatorInterface $validator,
         public SerializerInterface $serializer,
         private FilesystemOperator $defaultStorage,
+        private ConversionRepository $conversionRepository,
     ) {
     }
 
@@ -88,13 +91,20 @@ final class ConversionController extends AbstractController
             fclose($stream);
         }
 
-        // TODO: build and store entity
+        $entity = new Conversion(
+            id: $id,
+            ownerId: $ownerId,
+            sourceFormat: $request->sourceFormat,
+            targetFormat: $request->targetFormat,
+        );
+
+        $this->conversionRepository->save($entity);
 
         // TODO: send message to queue
 
         return $this->serializeResponse(
             [
-                'id' => (string) new UuidV7(),
+                'id' => (string) $id,
                 'status' => 'accepted',
             ],
             $responseMediaType,

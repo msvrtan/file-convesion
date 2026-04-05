@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
+use App\Repository\ConversionRepository;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -48,6 +49,17 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertIsString($payload['id']);
         self::assertTrue(Uuid::isValid($payload['id']));
         self::assertSame('accepted', $payload['status'] ?? null);
+
+        /** @var ConversionRepository $conversionRepository */
+        $conversionRepository = self::getContainer()->get(ConversionRepository::class);
+        $conversion = $conversionRepository->load(
+            Uuid::fromString($payload['id']),
+            Uuid::fromString(AppFixtures::ACME_ID),
+        );
+
+        self::assertNotNull($conversion);
+        self::assertSame($payload['id'], (string) $conversion->getId());
+        self::assertSame(AppFixtures::ACME_ID, (string) $conversion->getOwnerId());
     }
 
     private function createJwtToken(string $username): string
