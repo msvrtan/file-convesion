@@ -195,3 +195,12 @@ what exceptions can buildAndSaveConversion throw? note them in header of the met
 ## 2026-04-05T09:00:34+02:00 [gpt-5.4 high]
 what exceptions can moveFileToUploadSection throw? note them in header of the method
 
+## 2026-04-05T09:13:28+02:00 [gpt-5.4 high]
+please create in model namespace BadRequest exception
+
+## 2026-04-05T09:15:23+02:00 [gpt-5.4 high]
+please create and configure listener for that exception that will return it as response with Response::HTTP_BAD_REQUEST , using content type based on http's accept header if json or xml, otherwise default is json
+
+## 2026-04-05T09:19:27+02:00 [gpt-5.4 high]
+please add to happy path test check that file was moved where we expected it to be
+

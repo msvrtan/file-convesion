@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Conversion;
 use App\Entity\Customer;
+use App\Model\BadRequest;
 use App\Model\ConversionRequest;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
@@ -39,42 +40,9 @@ final class ConversionController extends AbstractController
         Request $httpRequest,
         #[CurrentUser] Customer $customer,
     ): Response {
-        $acceptHeader = $httpRequest->headers->get('Accept');
+        $request = $this->convertRequest($httpRequest);
 
-        if ('application/json' === $acceptHeader) {
-            $responseMediaType = 'application/json';
-        } elseif ('application/xml' === $acceptHeader) {
-            $responseMediaType = 'application/xml';
-        } else {
-            $message = sprintf('Missing or invalid Accept header. Expected one of: [application/json, application/xml] but got [%s].', $acceptHeader ?? 'null');
-
-            return $this->serializeResponse(
-                ['message' => $message],
-                'application/json',
-                Response::HTTP_BAD_REQUEST,
-            );
-        }
-
-        /** @var UploadedFile|null $file */
-        $file = $httpRequest->files->get('file');
-        $targetFormat = (string) $httpRequest->request->get('targetFormat');
-
-        $request = new ConversionRequest($file, $targetFormat);
-
-        $errors = $this->validator->validate($request);
-
-        if (count($errors) > 0) {
-            $errorMessages = [];
-            foreach ($errors as $error) {
-                $errorMessages[] = $error->getMessage();
-            }
-
-            return $this->serializeResponse(
-                ['errors' => $errorMessages],
-                $responseMediaType,
-                Response::HTTP_BAD_REQUEST,
-            );
-        }
+        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
 
         $id = new UuidV7();
         $ownerId = $customer->getId();
@@ -120,6 +88,45 @@ final class ConversionController extends AbstractController
         $content = $this->serializer->serialize($data, $serializerFormat);
 
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
+    }
+
+    /**
+     * @throws BadRequest
+     */
+    private function resolveResponseMediaType(Request $httpRequest): string
+    {
+        $acceptHeader = $httpRequest->headers->get('Accept');
+
+        return match ($acceptHeader) {
+            'application/json' => 'application/json',
+            'application/xml' => 'application/xml',
+            default => throw new BadRequest(sprintf('Missing or invalid Accept header. Expected one of: [application/json, application/xml] but got [%s].', $acceptHeader ?? 'null')),
+        };
+    }
+
+    /**
+     * @throws BadRequest
+     */
+    private function convertRequest(Request $httpRequest): ConversionRequest
+    {
+        /** @var UploadedFile|null $file */
+        $file = $httpRequest->files->get('file');
+        $targetFormat = (string) $httpRequest->request->get('targetFormat');
+
+        $request = new ConversionRequest($file, $targetFormat);
+
+        $errors = $this->validator->validate($request);
+
+        if (count($errors) > 0) {
+            $errorMessage = '';
+            foreach ($errors as $error) {
+                $errorMessage .= (string) $error->getMessage();
+            }
+
+            throw new BadRequest($errorMessage);
+        }
+
+        return $request;
     }
 
     /**

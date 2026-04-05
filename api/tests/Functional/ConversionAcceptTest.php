@@ -64,6 +64,15 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertSame($payload['id'], (string) $conversion->getId());
         self::assertSame(AppFixtures::ACME_ID, (string) $conversion->getOwnerId());
 
+        $storedFilePath = self::storagePath(
+            sprintf('uploads/%s/%s.json', AppFixtures::ACME_ID, $payload['id']),
+        );
+        self::assertFileExists($storedFilePath);
+        self::assertSame(
+            file_get_contents(self::fixturePath('sample.json')),
+            file_get_contents($storedFilePath),
+        );
+
         /** @var Connection $connection */
         $connection = self::getContainer()->get(Connection::class);
         $queuedMessage = $connection->fetchAssociative(
@@ -97,6 +106,62 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertInstanceOf(ConvertFile::class, $message);
         self::assertSame($payload['id'], (string) $message->getId());
         self::assertSame(AppFixtures::ACME_ID, (string) $message->getOwnerId());
+    }
+
+    public function testBadRequestDefaultsToJsonWhenAcceptHeaderIsMissing(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'xml'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{message?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertIsString($payload['message'] ?? null);
+        self::assertStringContainsString('Missing or invalid Accept header', $payload['message']);
+    }
+
+    public function testBadRequestUsesXmlWhenAcceptHeaderRequestsXml(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'yaml'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_ACCEPT' => 'application/xml',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        self::assertResponseHeaderSame('content-type', 'application/xml');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $payload = simplexml_load_string($content);
+        self::assertInstanceOf(\SimpleXMLElement::class, $payload);
+        self::assertSame(
+            'Supported target formats are json, xml.',
+            (string) $payload->message,
+        );
     }
 
     private function createJwtToken(string $username): string
@@ -139,5 +204,10 @@ final class ConversionAcceptTest extends WebTestCase
     private static function fixturePath(string $filename): string
     {
         return dirname(__DIR__).'/Fixtures/'.$filename;
+    }
+
+    private static function storagePath(string $filename): string
+    {
+        return dirname(__DIR__, 2).'/var/storage/default/'.$filename;
     }
 }
