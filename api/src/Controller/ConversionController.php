@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\MessageBus;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -29,7 +29,7 @@ final class ConversionController extends AbstractController
         public SerializerInterface $serializer,
         private FilesystemOperator $defaultStorage,
         private ConversionRepository $conversionRepository,
-        private MessageBus $messageBus,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
@@ -103,7 +103,7 @@ final class ConversionController extends AbstractController
 
         $this->conversionRepository->save($entity);
 
-        $message = new ConvertFile($id,$ownerId);
+        $message = new ConvertFile($id, $ownerId);
         $this->messageBus->dispatch($message);
 
         return $this->serializeResponse(

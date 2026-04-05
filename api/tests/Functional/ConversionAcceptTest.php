@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
+use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
+use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
 use Symfony\Component\Uid\Uuid;
 
 final class ConversionAcceptTest extends WebTestCase
@@ -60,6 +63,40 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertNotNull($conversion);
         self::assertSame($payload['id'], (string) $conversion->getId());
         self::assertSame(AppFixtures::ACME_ID, (string) $conversion->getOwnerId());
+
+        /** @var Connection $connection */
+        $connection = self::getContainer()->get(Connection::class);
+        $queuedMessage = $connection->fetchAssociative(
+            'SELECT body, headers FROM messenger_messages WHERE queue_name = :queueName ORDER BY id DESC LIMIT 1',
+            ['queueName' => 'async'],
+        );
+
+        self::assertIsArray($queuedMessage);
+        self::assertArrayHasKey('body', $queuedMessage);
+        self::assertArrayHasKey('headers', $queuedMessage);
+        self::assertIsString($queuedMessage['body']);
+        self::assertIsString($queuedMessage['headers']);
+
+        $headers = json_decode($queuedMessage['headers'], true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($headers);
+
+        foreach ($headers as $key => $value) {
+            self::assertIsString($key);
+            self::assertIsString($value);
+        }
+
+        $serializer = new PhpSerializer();
+        /** @var array<string, string> $headers */
+        $envelope = $serializer->decode([
+            'body' => $queuedMessage['body'],
+            'headers' => $headers,
+        ]);
+
+        $message = $envelope->getMessage();
+
+        self::assertInstanceOf(ConvertFile::class, $message);
+        self::assertSame($payload['id'], (string) $message->getId());
+        self::assertSame(AppFixtures::ACME_ID, (string) $message->getOwnerId());
     }
 
     private function createJwtToken(string $username): string

@@ -171,3 +171,12 @@ make ConvertFile in Model namespace, hoding just id & ownerId in Uuid format
 ## 2026-04-05T08:16:33+02:00 [gpt-5.4 high]
 please commit changes together with _prompt.md
 
+## 2026-04-05T08:18:40+02:00 [gpt-5.4 high]
+please add to happy path test a check that there is a message in queue matching that id an ownerId
+
+## 2026-04-05T08:19:41+02:00 [gpt-5.4 high]
+fix phpstan complaints
+
+## 2026-04-05T08:49:46+02:00 [gpt-5.4 high]
+please commit
+
