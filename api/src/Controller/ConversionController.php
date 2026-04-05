@@ -10,6 +10,7 @@ use App\Model\BadRequest;
 use App\Model\ConversionRequest;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
+use App\Service\RequestResolver;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -22,16 +23,15 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class ConversionController extends AbstractController
 {
     public function __construct(
-        public ValidatorInterface $validator,
         public SerializerInterface $serializer,
         private FilesystemOperator $defaultStorage,
         private ConversionRepository $conversionRepository,
         private MessageBusInterface $messageBus,
+        private RequestResolver $requestResolver,
     ) {
     }
 
@@ -107,24 +107,7 @@ final class ConversionController extends AbstractController
      */
     private function convertRequest(Request $httpRequest, Uuid $id, Uuid $ownerId): ConversionRequest
     {
-        /** @var UploadedFile|null $file */
-        $file = $httpRequest->files->get('file');
-        $targetFormat = (string) $httpRequest->request->get('targetFormat');
-
-        $request = new ConversionRequest($id, $ownerId, $file, $targetFormat);
-
-        $errors = $this->validator->validate($request);
-
-        if (count($errors) > 0) {
-            $errorMessage = '';
-            foreach ($errors as $error) {
-                $errorMessage .= $error->getMessage();
-            }
-
-            throw new BadRequest($errorMessage);
-        }
-
-        return $request;
+        return $this->requestResolver->convertRequest($httpRequest, $id, $ownerId);
     }
 
     /**

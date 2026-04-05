@@ -204,3 +204,15 @@ please create and configure listener for that exception that will return it as r
 ## 2026-04-05T09:19:27+02:00 [gpt-5.4 high]
 please add to happy path test check that file was moved where we expected it to be
 
+## 2026-04-05T09:31:53+02:00 [gpt-5.4 high]
+lets extract convertRequest() insides into RequestResolver service
+
+## 2026-04-05T09:32:53+02:00 [gpt-5.4 high]
+no, leave original method so we keep in main method only intent and not implementation
+
+## 2026-04-05T09:33:42+02:00 [gpt-5.4 high]
+please create unit tests for RequestResolver
+
+## 2026-04-05T09:34:55+02:00 [gpt-5.4 high]
+commit
+
