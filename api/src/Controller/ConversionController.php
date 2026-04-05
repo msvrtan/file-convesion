@@ -19,6 +19,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -94,14 +95,7 @@ final class ConversionController extends AbstractController
             fclose($stream);
         }
 
-        $entity = new Conversion(
-            id: $id,
-            ownerId: $ownerId,
-            sourceFormat: $request->sourceFormat,
-            targetFormat: $request->targetFormat,
-        );
-
-        $this->conversionRepository->save($entity);
+        $entity = $this->buildAndSaveConversion($id, $ownerId, $request);
 
         $this->publishConversion($entity);
 
@@ -140,6 +134,20 @@ final class ConversionController extends AbstractController
         $content = $this->serializer->serialize($data, $serializerFormat);
 
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
+    }
+
+    private function buildAndSaveConversion(Uuid $id, Uuid $ownerId, ConversionRequest $request): Conversion
+    {
+        $entity = new Conversion(
+            id: $id,
+            ownerId: $ownerId,
+            sourceFormat: $request->sourceFormat,
+            targetFormat: $request->targetFormat,
+        );
+
+        $this->conversionRepository->save($entity);
+
+        return $entity;
     }
 
     /**
