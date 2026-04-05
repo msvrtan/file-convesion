@@ -282,3 +282,9 @@ create unit tests for testconverter
 ## 2026-04-05T10:23:59+02:00 [gpt-5.4 high]
 commit
 
+## 2026-04-05T10:34:54+02:00 [gpt-5.4 high]
+please create handler for messenger that will accept ConvertFile message, get content via flysystem, send it to converter and store it in converted slot
+
+## 2026-04-05T10:45:15+02:00 [gpt-5.4 high]
+refactor handler to separate intention from implementation
+
