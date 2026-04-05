@@ -186,3 +186,9 @@ what exceptions can publishConversion throw?
 ## 2026-04-05T08:53:34+02:00 [gpt-5.4 high]
 please note them in header of the method
 
+## 2026-04-05T08:56:41+02:00 [gpt-5.4 high]
+what exceptions can publishConversi throw?
+
+## 2026-04-05T08:56:59+02:00 [gpt-5.4 high]
+what exceptions can buildAndSaveConversion throw? note them in header of the method
+

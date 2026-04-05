@@ -136,6 +136,10 @@ final class ConversionController extends AbstractController
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
     }
 
+    /**
+     * @throws \Doctrine\ORM\Exception\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     private function buildAndSaveConversion(Uuid $id, Uuid $ownerId, ConversionRequest $request): Conversion
     {
         $entity = new Conversion(
