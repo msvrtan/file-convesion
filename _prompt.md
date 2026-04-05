@@ -165,3 +165,9 @@ before message in Conversion entity, include ConversionStatus, in constructor se
 ## 2026-04-05T08:10:48+02:00 [gpt-5.4 high]
 please add to happy path test a check that there is a record in conversion database matching that id an ownerId
 
+## 2026-04-05T08:15:33+02:00 [gpt-5.4 high]
+make ConvertFile in Model namespace, hoding just id & ownerId in Uuid format
+
+## 2026-04-05T08:16:33+02:00 [gpt-5.4 high]
+please commit changes together with _prompt.md
+
