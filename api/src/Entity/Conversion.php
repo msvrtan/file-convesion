@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Model\ConversionStatus;
 use App\Repository\ConversionRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -27,6 +28,9 @@ class Conversion
     #[ORM\Column(name: 'target_format', type: Types::STRING, length: 32)]
     private string $targetFormat;
 
+    #[ORM\Column(type: Types::SMALLINT, enumType: ConversionStatus::class)]
+    private ConversionStatus $status;
+
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $message = null;
 
@@ -45,6 +49,7 @@ class Conversion
         $this->ownerId = $ownerId;
         $this->sourceFormat = $sourceFormat;
         $this->targetFormat = $targetFormat;
+        $this->status = ConversionStatus::Accepted;
         $this->createdAt = new \DateTime();
     }
 
@@ -66,6 +71,11 @@ class Conversion
     public function getTargetFormat(): string
     {
         return $this->targetFormat;
+    }
+
+    public function getStatus(): ConversionStatus
+    {
+        return $this->status;
     }
 
     public function getMessage(): ?string
