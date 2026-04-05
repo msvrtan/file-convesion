@@ -180,3 +180,9 @@ fix phpstan complaints
 ## 2026-04-05T08:49:46+02:00 [gpt-5.4 high]
 please commit
 
+## 2026-04-05T08:52:59+02:00 [gpt-5.4 high]
+what exceptions can publishConversion throw?
+
+## 2026-04-05T08:53:34+02:00 [gpt-5.4 high]
+please note them in header of the method
+

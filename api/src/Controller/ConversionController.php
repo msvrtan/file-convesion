@@ -142,6 +142,9 @@ final class ConversionController extends AbstractController
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
     }
 
+    /**
+     * @throws \Symfony\Component\Messenger\Exception\ExceptionInterface
+     */
     private function publishConversion(Conversion $conversion): void
     {
         $message = new ConvertFile($conversion->getId(), $conversion->getOwnerId());
