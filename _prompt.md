@@ -270,3 +270,15 @@ commit
 ## 2026-04-05T10:25:42+02:00 [gpt-5.4 high]
 fix tests please
 
+## 2026-04-05T10:19:17+02:00 [gpt-5.4 high]
+test converter should read target format and load sample from tests/fixtures and return it
+
+## 2026-04-05T10:21:10+02:00 [gpt-5.4 high]
+do same thing in sleepy converter but add 120 second sleep
+
+## 2026-04-05T10:21:30+02:00 [gpt-5.4 high]
+create unit tests for testconverter
+
+## 2026-04-05T10:23:59+02:00 [gpt-5.4 high]
+commit
+
