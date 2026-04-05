@@ -41,14 +41,6 @@ class Conversion
 
     public function __construct(Uuid $id, Uuid $ownerId, string $sourceFormat, string $targetFormat)
     {
-        if ('' === $sourceFormat) {
-            throw new \InvalidArgumentException('Source format cannot be empty.');
-        }
-
-        if ('' === $targetFormat) {
-            throw new \InvalidArgumentException('Target format cannot be empty.');
-        }
-
         $this->id = $id;
         $this->ownerId = $ownerId;
         $this->sourceFormat = $sourceFormat;
@@ -66,27 +58,9 @@ class Conversion
         return $this->ownerId;
     }
 
-    public function setOwnerId(Uuid $ownerId): self
-    {
-        $this->ownerId = $ownerId;
-
-        return $this;
-    }
-
     public function getSourceFormat(): string
     {
         return $this->sourceFormat;
-    }
-
-    public function setSourceFormat(string $sourceFormat): self
-    {
-        if ('' === $sourceFormat) {
-            throw new \InvalidArgumentException('Source format cannot be empty.');
-        }
-
-        $this->sourceFormat = $sourceFormat;
-
-        return $this;
     }
 
     public function getTargetFormat(): string
@@ -94,27 +68,9 @@ class Conversion
         return $this->targetFormat;
     }
 
-    public function setTargetFormat(string $targetFormat): self
-    {
-        if ('' === $targetFormat) {
-            throw new \InvalidArgumentException('Target format cannot be empty.');
-        }
-
-        $this->targetFormat = $targetFormat;
-
-        return $this;
-    }
-
     public function getMessage(): ?string
     {
         return $this->message;
-    }
-
-    public function setMessage(?string $message): self
-    {
-        $this->message = $message;
-
-        return $this;
     }
 
     public function getCreatedAt(): \DateTime
@@ -122,34 +78,13 @@ class Conversion
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTime $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
     public function getProcessingStartedAt(): ?\DateTime
     {
         return $this->processingStartedAt;
     }
 
-    public function setProcessingStartedAt(?\DateTime $processingStartedAt): self
-    {
-        $this->processingStartedAt = $processingStartedAt;
-
-        return $this;
-    }
-
     public function getProcessingEndedAt(): ?\DateTime
     {
         return $this->processingEndedAt;
-    }
-
-    public function setProcessingEndedAt(?\DateTime $processingEndedAt): self
-    {
-        $this->processingEndedAt = $processingEndedAt;
-
-        return $this;
     }
 }
