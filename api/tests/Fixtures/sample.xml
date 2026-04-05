@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<countries>
+  <country>
+    <name>Croatia</name>
+    <iso2>HR</iso2>
+    <iso3>HRV</iso3>
+    <capital>Zagreb</capital>
+    <continent>Europe</continent>
+    <population_millions>3.9</population_millions>
+    <area_km2>56594</area_km2>
+    <currency>EUR</currency>
+    <official_language>Croatian</official_language>
+  </country>
+  <country>
+    <name>Japan</name>
+    <iso2>JP</iso2>
+    <iso3>JPN</iso3>
+    <capital>Tokyo</capital>
+    <continent>Asia</continent>
+    <population_millions>123.3</population_millions>
+    <area_km2>377975</area_km2>
+    <currency>JPY</currency>
+    <official_language>Japanese</official_language>
+  </country>
+  <country>
+    <name>Brazil</name>
+    <iso2>BR</iso2>
+    <iso3>BRA</iso3>
+    <capital>Brasilia</capital>
+    <continent>South America</continent>
+    <population_millions>203.1</population_millions>
+    <area_km2>8515767</area_km2>
+    <currency>BRL</currency>
+    <official_language>Portuguese</official_language>
+  </country>
+  <country>
+    <name>Canada</name>
+    <iso2>CA</iso2>
+    <iso3>CAN</iso3>
+    <capital>Ottawa</capital>
+    <continent>North America</continent>
+    <population_millions>41.0</population_millions>
+    <area_km2>9984670</area_km2>
+    <currency>CAD</currency>
+    <official_language>English and French</official_language>
+  </country>
+  <country>
+    <name>Kenya</name>
+    <iso2>KE</iso2>
+    <iso3>KEN</iso3>
+    <capital>Nairobi</capital>
+    <continent>Africa</continent>
+    <population_millions>55.3</population_millions>
+    <area_km2>580367</area_km2>
+    <currency>KES</currency>
+    <official_language>Swahili and English</official_language>
+  </country>
+  <country>
+    <name>Australia</name>
+    <iso2>AU</iso2>
+    <iso3>AUS</iso3>
+    <capital>Canberra</capital>
+    <continent>Oceania</continent>
+    <population_millions>27.1</population_millions>
+    <area_km2>7692024</area_km2>
+    <currency>AUD</currency>
+    <official_language>English</official_language>
+  </country>
+  <country>
+    <name>India</name>
+    <iso2>IN</iso2>
+    <iso3>IND</iso3>
+    <capital>New Delhi</capital>
+    <continent>Asia</continent>
+    <population_millions>1430.0</population_millions>
+    <area_km2>3287263</area_km2>
+    <currency>INR</currency>
+    <official_language>Hindi and English</official_language>
+  </country>
+  <country>
+    <name>Germany</name>
+    <iso2>DE</iso2>
+    <iso3>DEU</iso3>
+    <capital>Berlin</capital>
+    <continent>Europe</continent>
+    <population_millions>84.4</population_millions>
+    <area_km2>357588</area_km2>
+    <currency>EUR</currency>
+    <official_language>German</official_language>
+  </country>
+  <country>
+    <name>Mexico</name>
+    <iso2>MX</iso2>
+    <iso3>MEX</iso3>
+    <capital>Mexico City</capital>
+    <continent>North America</continent>
+    <population_millions>129.5</population_millions>
+    <area_km2>1964375</area_km2>
+    <currency>MXN</currency>
+    <official_language>Spanish</official_language>
+  </country>
+  <country>
+    <name>South Africa</name>
+    <iso2>ZA</iso2>
+    <iso3>ZAF</iso3>
+    <capital>Pretoria</capital>
+    <continent>Africa</continent>
+    <population_millions>62.0</population_millions>
+    <area_km2>1221037</area_km2>
+    <currency>ZAR</currency>
+    <official_language>Xitsonga, Zulu, and 9 others</official_language>
+  </country>
+</countries>
