@@ -54,6 +54,32 @@ final class RequestResolverTest extends TestCase
         $this->requestResolver->convertRequest($request, new UuidV7(), new UuidV7());
     }
 
+    public function testItAcceptsUppercaseFileExtensions(): void
+    {
+        $request = new Request(
+            request: ['targetFormat' => 'xml'],
+            files: ['file' => self::createFixtureUpload('sample.xlsx', 'sample.XLSX')],
+        );
+
+        $conversionRequest = $this->requestResolver->convertRequest($request, new UuidV7(), new UuidV7());
+
+        self::assertSame('xlsx', $conversionRequest->sourceFormat);
+        self::assertSame('sample.XLSX', $conversionRequest->file?->getClientOriginalName());
+    }
+
+    public function testItAcceptsMixedCaseFileExtensions(): void
+    {
+        $request = new Request(
+            request: ['targetFormat' => 'json'],
+            files: ['file' => self::createFixtureUpload('sample.ods', 'sample.oDs')],
+        );
+
+        $conversionRequest = $this->requestResolver->convertRequest($request, new UuidV7(), new UuidV7());
+
+        self::assertSame('ods', $conversionRequest->sourceFormat);
+        self::assertSame('sample.oDs', $conversionRequest->file?->getClientOriginalName());
+    }
+
     private function createValidator(): ValidatorInterface
     {
         return Validation::createValidatorBuilder()
@@ -61,11 +87,11 @@ final class RequestResolverTest extends TestCase
             ->getValidator();
     }
 
-    private static function createFixtureUpload(): UploadedFile
+    private static function createFixtureUpload(string $fixtureName = 'sample.json', ?string $clientName = null): UploadedFile
     {
         return new UploadedFile(
-            self::fixturePath('sample.json'),
-            'sample.json',
+            self::fixturePath($fixtureName),
+            $clientName ?? $fixtureName,
             'application/json',
             test: true,
         );

@@ -39,7 +39,7 @@ class ConversionRequest
         string $targetFormat,
     ) {
         $this->file = $file;
-        $this->sourceFormat = $this->file?->getClientOriginalExtension() ?? '';
+        $this->sourceFormat = strtolower($this->file?->getClientOriginalExtension() ?? '');
         $this->targetFormat = $targetFormat;
     }
 }
