@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use App\Model\BadRequest;
+use App\Service\ResponseMediaTypeResolver;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -16,6 +16,7 @@ final class BadRequestSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private SerializerInterface $serializer,
+        private ResponseMediaTypeResolver $responseMediaTypeResolver,
     ) {
     }
 
@@ -34,7 +35,7 @@ final class BadRequestSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $mediaType = $this->resolveResponseMediaType($event->getRequest());
+        $mediaType = $this->responseMediaTypeResolver->resolve($event->getRequest());
         $format = 'application/xml' === $mediaType ? 'xml' : 'json';
         $content = $this->serializer->serialize(
             ['message' => $throwable->getMessage()],
@@ -50,18 +51,4 @@ final class BadRequestSubscriber implements EventSubscriberInterface
         );
     }
 
-    private function resolveResponseMediaType(Request $request): string
-    {
-        foreach ($request->getAcceptableContentTypes() as $acceptableContentType) {
-            if ('application/xml' === $acceptableContentType) {
-                return 'application/xml';
-            }
-
-            if ('application/json' === $acceptableContentType || '*/*' === $acceptableContentType) {
-                return 'application/json';
-            }
-        }
-
-        return 'application/json';
-    }
 }

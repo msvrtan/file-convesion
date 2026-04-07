@@ -11,6 +11,7 @@ use App\Model\ConversionStatus;
 use App\Repository\ConversionRepository;
 use App\Service\AcceptConversion;
 use App\Service\RequestResolver;
+use App\Service\ResponseMediaTypeResolver;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -31,6 +32,7 @@ final class ConversionController extends AbstractController
         private AcceptConversion $acceptConversion,
         private ConversionRepository $conversionRepository,
         private FilesystemOperator $defaultStorage,
+        private ResponseMediaTypeResolver $responseMediaTypeResolver,
     ) {
     }
 
@@ -44,7 +46,7 @@ final class ConversionController extends AbstractController
 
         $request = $this->convertRequest($httpRequest, $id, $ownerId);
 
-        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
+        $responseMediaType = $this->responseMediaTypeResolver->resolve($httpRequest);
 
         $entity = $this->acceptConversion->accept($request);
 
@@ -62,7 +64,7 @@ final class ConversionController extends AbstractController
         Uuid $id,
         #[CurrentUser] Customer $customer,
     ): Response {
-        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
+        $responseMediaType = $this->responseMediaTypeResolver->resolve($httpRequest);
 
         $entity = $this->conversionRepository->load($id, $customer->getId());
 
@@ -110,7 +112,7 @@ final class ConversionController extends AbstractController
         Uuid $id,
         #[CurrentUser] Customer $customer,
     ): Response {
-        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
+        $responseMediaType = $this->responseMediaTypeResolver->resolve($httpRequest);
 
         $entity = $this->conversionRepository->load($id, $customer->getId());
 
@@ -169,21 +171,6 @@ final class ConversionController extends AbstractController
         $content = $this->serializer->serialize($data, $serializerFormat);
 
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
-    }
-
-    private function resolveResponseMediaType(Request $httpRequest): string
-    {
-        foreach ($httpRequest->getAcceptableContentTypes() as $acceptableContentType) {
-            if ('application/xml' === $acceptableContentType) {
-                return 'application/xml';
-            }
-
-            if ('application/json' === $acceptableContentType || '*/*' === $acceptableContentType) {
-                return 'application/json';
-            }
-        }
-
-        return 'application/json';
     }
 
     private function downloadMediaType(string $targetFormat): string
