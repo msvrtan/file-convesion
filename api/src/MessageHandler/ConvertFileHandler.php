@@ -8,6 +8,7 @@ use App\Entity\Conversion;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
 use App\Service\FileConverter\FileConverter;
+use App\Service\PathResolver;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -19,6 +20,7 @@ final class ConvertFileHandler
         private FilesystemOperator $defaultStorage,
         private ConversionRepository $conversionRepository,
         private FileConverter $fileConverter,
+        private PathResolver $pathResolver,
     ) {
     }
 
@@ -60,7 +62,7 @@ final class ConvertFileHandler
      */
     private function loadSourceContent(Conversion $entity): string
     {
-        return $this->defaultStorage->read($this->sourcePath($entity));
+        return $this->defaultStorage->read($this->pathResolver->uploadPathForConversion($entity));
     }
 
     private function convertContent(Conversion $entity, string $sourceContent): string
@@ -77,27 +79,7 @@ final class ConvertFileHandler
      */
     private function storeConvertedContent(Conversion $entity, string $convertedContent): void
     {
-        $this->defaultStorage->write($this->convertedPath($entity), $convertedContent);
-    }
-
-    private function sourcePath(Conversion $conversion): string
-    {
-        return sprintf(
-            'uploads/%s/%s.%s',
-            $conversion->getOwnerId(),
-            $conversion->getId(),
-            $conversion->getSourceFormat(),
-        );
-    }
-
-    private function convertedPath(Conversion $conversion): string
-    {
-        return sprintf(
-            'converted/%s/%s.%s',
-            $conversion->getOwnerId(),
-            $conversion->getId(),
-            $conversion->getTargetFormat(),
-        );
+        $this->defaultStorage->write($this->pathResolver->convertedPathForConversion($entity), $convertedContent);
     }
 
     private function markAsProcessingStarted(Conversion $entity): void

@@ -9,6 +9,8 @@ use App\Model\ConversionRequest;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
 use App\Service\AcceptConversion;
+use App\Service\PathResolver;
+use App\Tests\UsesFixtureFiles;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use League\Flysystem\FilesystemException;
@@ -23,9 +25,12 @@ use Symfony\Component\Uid\UuidV7;
 
 final class AcceptConversionTest extends TestCase
 {
+    use UsesFixtureFiles;
+
     private FilesystemOperator&MockObject $defaultStorage;
     private ConversionRepository&MockObject $conversionRepository;
     private MessageBusInterface&MockObject $messageBus;
+    private PathResolver $pathResolver;
     private AcceptConversion $acceptConversion;
 
     protected function setUp(): void
@@ -36,11 +41,13 @@ final class AcceptConversionTest extends TestCase
             ->onlyMethods(['save', 'delete'])
             ->getMock();
         $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->pathResolver = new PathResolver();
 
         $this->acceptConversion = new AcceptConversion(
             $this->defaultStorage,
             $this->conversionRepository,
             $this->messageBus,
+            $this->pathResolver,
         );
     }
 
@@ -53,7 +60,7 @@ final class AcceptConversionTest extends TestCase
         $this->defaultStorage->expects(self::once())
             ->method('writeStream')
             ->with(
-                sprintf('uploads/%s/%s.json', $request->ownerId, $request->id),
+                $this->pathResolver->uploadPath($request->ownerId, $request->id, 'json'),
                 self::callback(static function (mixed $stream) use ($expectedContent): bool {
                     if (!is_resource($stream)) {
                         return false;
@@ -143,7 +150,7 @@ final class AcceptConversionTest extends TestCase
         $exception = new class('ORM failure.') extends \RuntimeException implements ORMException {
         };
 
-        $sourcePath = sprintf('uploads/%s/%s.json', $request->ownerId, $request->id);
+        $sourcePath = $this->pathResolver->uploadPath($request->ownerId, $request->id, 'json');
 
         $this->defaultStorage->expects(self::once())->method('writeStream');
         $this->defaultStorage->expects(self::once())
@@ -165,7 +172,7 @@ final class AcceptConversionTest extends TestCase
         $request = self::createConversionRequest();
         $exception = new OptimisticLockException('Optimistic lock failure.', null);
 
-        $sourcePath = sprintf('uploads/%s/%s.json', $request->ownerId, $request->id);
+        $sourcePath = $this->pathResolver->uploadPath($request->ownerId, $request->id, 'json');
 
         $this->defaultStorage->expects(self::once())->method('writeStream');
         $this->defaultStorage->expects(self::once())
@@ -188,7 +195,7 @@ final class AcceptConversionTest extends TestCase
         $exception = new class('Dispatch failure.') extends \RuntimeException implements ExceptionInterface {
         };
 
-        $sourcePath = sprintf('uploads/%s/%s.json', $request->ownerId, $request->id);
+        $sourcePath = $this->pathResolver->uploadPath($request->ownerId, $request->id, 'json');
 
         $this->defaultStorage->expects(self::once())->method('writeStream');
         $this->defaultStorage->expects(self::once())
@@ -225,10 +232,5 @@ final class AcceptConversionTest extends TestCase
             ),
             'xml',
         );
-    }
-
-    private static function fixturePath(string $filename): string
-    {
-        return dirname(__DIR__, 2).'/Fixtures/'.$filename;
     }
 }

@@ -7,22 +7,32 @@ namespace App\Tests\Functional;
 use App\DataFixtures\AppFixtures;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
-use Doctrine\DBAL\Connection;
+use App\Tests\UsesFixtureFiles;
+use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
+use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 use Symfony\Component\Uid\Uuid;
 
 final class ConversionAcceptTest extends WebTestCase
 {
+    use AuthenticatesCustomer;
+    use UsesFixtureFiles;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+        $this->asyncTransport()->reset();
+    }
+
+    protected function browser(): KernelBrowser
+    {
+        return $this->client;
     }
 
     public function testCustomerCanSubmitConversionRequest(): void
@@ -64,48 +74,67 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertSame($payload['id'], (string) $conversion->getId());
         self::assertSame(AppFixtures::ACME_ID, (string) $conversion->getOwnerId());
 
-        $storedFilePath = self::storagePath(
-            sprintf('uploads/%s/%s.json', AppFixtures::ACME_ID, $payload['id']),
-        );
-        self::assertFileExists($storedFilePath);
+        $storedFilePath = $this->pathResolver()->uploadPath(AppFixtures::ACME_ID, $payload['id'], 'json');
+        self::assertTrue($this->defaultStorage()->fileExists($storedFilePath));
         self::assertSame(
             file_get_contents(self::fixturePath('sample.json')),
-            file_get_contents($storedFilePath),
+            $this->defaultStorage()->read($storedFilePath),
         );
 
-        /** @var Connection $connection */
-        $connection = self::getContainer()->get(Connection::class);
-        $queuedMessage = $connection->fetchAssociative(
-            'SELECT body, headers FROM messenger_messages WHERE queue_name = :queueName ORDER BY id DESC LIMIT 1',
-            ['queueName' => 'async'],
-        );
+        $sentEnvelopes = $this->asyncTransport()->getSent();
+        self::assertCount(1, $sentEnvelopes);
 
-        self::assertIsArray($queuedMessage);
-        self::assertArrayHasKey('body', $queuedMessage);
-        self::assertArrayHasKey('headers', $queuedMessage);
-        self::assertIsString($queuedMessage['body']);
-        self::assertIsString($queuedMessage['headers']);
-
-        $headers = json_decode($queuedMessage['headers'], true, 512, JSON_THROW_ON_ERROR);
-        self::assertIsArray($headers);
-
-        foreach ($headers as $key => $value) {
-            self::assertIsString($key);
-            self::assertIsString($value);
-        }
-
-        $serializer = new PhpSerializer();
-        /** @var array<string, string> $headers */
-        $envelope = $serializer->decode([
-            'body' => $queuedMessage['body'],
-            'headers' => $headers,
-        ]);
+        $envelope = $sentEnvelopes[0];
 
         $message = $envelope->getMessage();
 
         self::assertInstanceOf(ConvertFile::class, $message);
         self::assertSame($payload['id'], (string) $message->getId());
         self::assertSame(AppFixtures::ACME_ID, (string) $message->getOwnerId());
+    }
+
+    public function testCustomerCanSubmitCsvConversionRequest(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'xml'],
+            ['file' => self::createFixtureUpload('sample.csv', 'sample.csv', 'text/csv')],
+            server: [
+                'HTTP_ACCEPT' => 'application/json',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{id?: mixed, status?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertIsString($payload['id'] ?? null);
+        self::assertSame('accepted', $payload['status'] ?? null);
+
+        /** @var ConversionRepository $conversionRepository */
+        $conversionRepository = self::getContainer()->get(ConversionRepository::class);
+        $conversion = $conversionRepository->load(
+            Uuid::fromString($payload['id']),
+            Uuid::fromString(AppFixtures::ACME_ID),
+        );
+
+        self::assertNotNull($conversion);
+        self::assertSame('csv', $conversion->getSourceFormat());
+
+        $storedFilePath = $this->pathResolver()->uploadPath(AppFixtures::ACME_ID, $payload['id'], 'csv');
+        self::assertTrue($this->defaultStorage()->fileExists($storedFilePath));
+        self::assertSame(
+            file_get_contents(self::fixturePath('sample.csv')),
+            $this->defaultStorage()->read($storedFilePath),
+        );
     }
 
     public function testHappyPathDefaultsToJsonWhenAcceptHeaderIsMissing(): void
@@ -133,6 +162,33 @@ final class ConversionAcceptTest extends WebTestCase
 
         self::assertIsString($payload['id'] ?? null);
         self::assertSame('accepted', $payload['status'] ?? null);
+    }
+
+    public function testHappyPathUsesXmlWhenAcceptHeaderRequestsXml(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'xml'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_ACCEPT' => 'application/xml',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
+        self::assertResponseHeaderSame('content-type', 'application/xml');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $payload = simplexml_load_string($content);
+        self::assertInstanceOf(\SimpleXMLElement::class, $payload);
+        self::assertTrue(Uuid::isValid((string) $payload->id));
+        self::assertSame('accepted', (string) $payload->status);
     }
 
     public function testHappyPathDefaultsToJsonWhenAcceptHeaderIsWildcard(): void
@@ -216,7 +272,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertInstanceOf(\SimpleXMLElement::class, $payload);
         self::assertSame(
             'Supported target formats are json, xml.',
-            self::normalizeXmlText((string) $payload->message),
+            trim((string) $payload->message),
         );
     }
 
@@ -245,7 +301,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertInstanceOf(\SimpleXMLElement::class, $payload);
         self::assertSame(
             'Supported target formats are json, xml.',
-            self::normalizeXmlText((string) $payload->message),
+            trim((string) $payload->message),
         );
     }
 
@@ -274,7 +330,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertInstanceOf(\SimpleXMLElement::class, $payload);
         self::assertSame(
             'Supported target formats are json, xml.',
-            self::normalizeXmlText((string) $payload->message),
+            trim((string) $payload->message),
         );
     }
 
@@ -310,58 +366,24 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertSame('Only a single file upload is supported.', $payload['message'] ?? null);
     }
 
-    private function createJwtToken(string $username): string
+    private function asyncTransport(): InMemoryTransport
     {
-        $this->client->request(
-            'POST',
-            '/auth/token',
-            server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode([
-                'username' => $username,
-                'password' => AppFixtures::DEFAULT_PASSWORD,
-            ], JSON_THROW_ON_ERROR),
-        );
+        /** @var InMemoryTransport $transport */
+        $transport = self::getContainer()->get('messenger.transport.async');
 
-        self::assertResponseStatusCodeSame(Response::HTTP_OK);
-
-        $content = $this->client->getResponse()->getContent();
-        self::assertIsString($content);
-
-        /** @var array{token?: mixed} $payload */
-        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-
-        self::assertArrayHasKey('token', $payload);
-        self::assertIsString($payload['token']);
-        self::assertNotSame('', $payload['token']);
-
-        return $payload['token'];
+        return $transport;
     }
 
-    private static function createFixtureUpload(
-        string $fixtureName = 'sample.json',
-        ?string $clientName = null,
-        string $mimeType = 'application/json',
-    ): UploadedFile {
-        return new UploadedFile(
-            self::fixturePath($fixtureName),
-            $clientName ?? $fixtureName,
-            $mimeType,
-            test: true,
-        );
+    private function defaultStorage(): FilesystemOperator
+    {
+        /** @var Filesystem $defaultStorage */
+        $defaultStorage = self::getContainer()->get('League\\Flysystem\\FilesystemOperator $defaultStorage');
+
+        return $defaultStorage;
     }
 
-    private static function fixturePath(string $filename): string
+    private function pathResolver(): \App\Service\PathResolver
     {
-        return dirname(__DIR__).'/Fixtures/'.$filename;
-    }
-
-    private static function storagePath(string $filename): string
-    {
-        return dirname(__DIR__, 2).'/var/storage/default/'.$filename;
-    }
-
-    private static function normalizeXmlText(string $value): string
-    {
-        return trim(str_replace(["\r", "\n", '\r', '\n'], '', $value));
+        return new \App\Service\PathResolver();
     }
 }

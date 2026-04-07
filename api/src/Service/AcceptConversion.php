@@ -18,6 +18,7 @@ final class AcceptConversion
         private FilesystemOperator $defaultStorage,
         private ConversionRepository $conversionRepository,
         private MessageBusInterface $messageBus,
+        private PathResolver $pathResolver,
     ) {
     }
 
@@ -61,7 +62,7 @@ final class AcceptConversion
         /** @var UploadedFile $uploadedFile */
         $uploadedFile = $request->file;
         $tempPath = $uploadedFile->getPathname();
-        $sourcePath = $this->sourcePath($request);
+        $sourcePath = $this->pathResolver->uploadPathForRequest($request);
         $stream = fopen($tempPath, 'rb');
 
         if (false === $stream) {
@@ -82,7 +83,7 @@ final class AcceptConversion
      */
     private function deleteUploadedFile(ConversionRequest $request): void
     {
-        $this->defaultStorage->delete($this->sourcePath($request));
+        $this->defaultStorage->delete($this->pathResolver->uploadPathForRequest($request));
     }
 
     /**
@@ -110,10 +111,5 @@ final class AcceptConversion
     {
         $message = new ConvertFile($conversion->getId(), $conversion->getOwnerId());
         $this->messageBus->dispatch($message);
-    }
-
-    private function sourcePath(ConversionRequest $request): string
-    {
-        return \sprintf('uploads/%s/%s.%s', $request->ownerId, $request->id, $request->sourceFormat);
     }
 }

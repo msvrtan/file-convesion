@@ -362,3 +362,180 @@ Security test (ConversionSecurityTest.php line 73-79) — the download security 
 ## 2026-04-07T14:48:50+02:00 [gpt-5.4 high]
 commit with _prompt.md
 
+## 2026-04-07T14:53:50+02:00 [gpt-5.4 high]
+please review tests and report if we could do things better
+
+## 2026-04-07T14:55:15+02:00 [gpt-5.4 high]
+completed-download coverage only exercises the XML branch, so regressions in download content type for other completed formats would currently slip through.
+    The controller has explicit media-type branching in api/src/Controller/ConversionController.php, but the happy-path tests in api/tests/Functional/
+    ConversionDownloadTest.php and api/tests/Functional/ConversionDownloadTest.php only cover completed xml. If json or a fallback format is a valid completed output in
+    practice, add at least one completed-download case for it.
+
+commit together with _prompt.md
+
+## 2026-04-07T14:57:31+02:00 [gpt-5.4 high]
+the cross-customer 404 case is weaker than the other negative-path tests. api/tests/Functional/ConversionDownloadTest.php asserts only the status code, so an
+    inconsistent body or content type on that path would still pass. It should assert the same error contract as the other 404 cases.
+
+## 2026-04-07T14:57:40+02:00 [gpt-5.4 high]
+commit with _prompt.md
+
+## 2026-04-07T14:58:08+02:00 [gpt-5.4 high]
+the storage helper in the test is coupled to Flysystem’s concrete implementation instead of the interface the app uses. api/tests/Functional/
+    ConversionDownloadTest.php returns League\Flysystem\Filesystem; using FilesystemOperator would make the test less brittle if the service gets decorated or proxied
+    later.
+
+## 2026-04-07T14:58:12+02:00 [gpt-5.4 high]
+commit with _prompt.md
+
+## 2026-04-07T14:58:56+02:00 [gpt-5.4 high]
+please fix phpstan complaints
+
+## 2026-04-07T14:59:26+02:00 [gpt-5.4 high]
+commit with _prompt.md
+
+## 2026-04-07T15:00:26+02:00 [gpt-5.4 high]
+implement one by one, committing changes before starting next one
+
+
+Here's my review of the test suite. Overall it's solid — good unit/functional separation, thorough error-path coverage in the handler and service layers, and proper
+  multi-tenant isolation checks. Below are the areas where I think you could do better, ordered by impact.                                                                
+                                                                                                                                                                          
+  ---                                                                                                                                                                     
+  High Impact                                                                                                                                                             
+                                                                                                                                                                          
+  1. Missing coverage: status endpoint security and 404 paths
+                                                                                                                                                                          
+  ConversionStatusTest only tests the 4 happy-path statuses. The controller has two untested paths:                                                                       
+                                                                                                                                                                          
+  - 404 for non-existent conversion (controller:69-75)                                                                                                                    
+  - 404 when customer A requests customer B's conversion — the download tests check this, but status doesn't
+                                                                                                                                                                          
+  For a security-focused API, cross-tenant status checks are important to verify.                                                                                         
+                                                                                                                                                                          
+  2. Missing coverage: unauthenticated requests (no Authorization header)                                                                                                 
+                                                            
+  ConversionSecurityTest tests invalid JWT (Bearer wRoNgTokEn) but never tests a request with no Authorization header at all. These are different code paths in the       
+  security layer.
+                                                                                                                                                                          
+  3. Missing coverage: failed login                                                                                                                                       
+                                         
+  AuthTokenTest only tests the happy path. No test for wrong password, wrong username, or missing credentials. For an auth endpoint, the rejection paths matter more than 
+  the success path.                                         
+                                                                                                                                                                          
+  4. createJwtToken duplicated 4 times with subtle variations                                                                                                             
+                                         
+  This private method is copy-pasted across ConversionAcceptTest, ConversionDownloadTest, ConversionSecurityTest, and ConversionStatusTest — with minor assertion         
+  differences between them. A shared trait or abstract base would eliminate this and make the functional tests more consistent:
+                                                                                                                                                                          
+  trait AuthenticatesCustomer                               
+  {                                      
+      abstract private function getClient(): KernelBrowser;
+                                                                                                                                                                          
+      private function createJwtToken(string $username): string { ... }
+  }                                                                                                                                                                       
+                                                            
+  5. ConversionAcceptTest reaches into Messenger internals                                                                                                                
+  
+  Lines 77-108 read directly from messenger_messages table and manually deserialize the envelope. This is testing Symfony Messenger's serialization, not your application.
+   If the transport serializer changes, this breaks even though your app works fine. Consider asserting only that the message was dispatched (e.g., using Symfony's
+  in-memory transport or TransportTester), not how it's stored.                                                                                                           
+                                                            
+  ---                                    
+  Medium Impact
+               
+  6. ConversionAcceptTest bypasses Flysystem for file assertions
+                                                                                                                                                                          
+  Lines 67-74 use file_get_contents(self::storagePath(...)) to verify the uploaded file, hardcoding the local filesystem path. This couples the test to the storage       
+  adapter. Compare with ConversionDownloadTest which correctly uses $this->defaultStorage()->write(...) via Flysystem. The accept test should do the same with ->read().  
+                                                                                                                                                                          
+  7. Two download tests rely on fixture state they don't control                                                                                                          
+                                         
+  testCompletedConversionCanBeDownloaded and testSecondCompletedConversionCanBeDownloaded depend on conversion IDs 000000000004 and 000000000008 being Completed in       
+  ConversionFixtures. If a fixture changes status, these tests break silently. Compare with testCompletedJsonConversionCanBeDownloaded which creates its own entity —
+  that's the safer pattern.                                                                                                                                               
+                                                            
+  8. No functional test uploads non-JSON source formats                                                                                                                   
+  
+  ConversionAcceptTest only uploads sample.json. The API accepts CSV, XLSX, and ODS. While RequestResolverTest validates format parsing at the unit level, there's no     
+  functional test proving that a CSV or XLSX upload goes through the full stack (file storage path would be uploads/{owner}/{id}.csv, not .json).
+                                                                                                                                                                          
+  9. Missing: XML response format for success paths         
+                                         
+  ConversionAcceptTest tests XML responses only for bad request scenarios. No test verifies that a successful 202 Accepted or 200 OK status response can be returned as   
+  XML. The status endpoint is also JSON-only in tests.
+                                                                                                                                                                          
+  10. resolveResponseMediaType is duplicated in production code                                                                                                           
+                                         
+  The same method exists in both ConversionController:174-187 and BadRequestSubscriber:53-66. The tests exercise both copies indirectly, but if one drifts from the other 
+  you won't know. This isn't a test problem per se, but tests could guard against it if the logic were extracted.
+                                                                                                                                                                          
+  ---                                                       
+  Low Impact / Nits                      
+                   
+  11. fixturePath and createFixtureUpload also duplicated
+                                                                                                                                                                          
+  These small helpers are repeated across test files. Minor, but a trait would clean this up alongside createJwtToken.                                                    
+                                                                                                                                                                          
+  12. normalizeXmlText masks potential issues                                                                                                                             
+                                                            
+  ConversionAcceptTest:363-366 strips newlines from XML text before comparison. If the serializer starts producing unexpected whitespace, this helper will hide it.       
+                                                            
+  13. No test for wrong HTTP methods                                                                                                                                      
+                                                            
+  No test verifies GET /conversions or POST /conversions/{id} returns 405. Symfony handles this, but a regression test is cheap.                                          
+                                                            
+  14. No test for invalid UUID in URL path                                                                                                                                
+                                                            
+  GET /conversions/not-a-uuid — Symfony's param converter handles this, but one test would guard against routing changes.                                                 
+                                                            
+  15. TestConverterTest tests a test double                                                                                                                               
+                                                            
+  Testing a stub that returns fixture files is very low value. It's not wrong, but it doesn't protect against real regressions.
+
+## 2026-04-07T15:30:24+02:00 [gpt-5.4 high]
+1. expectExceptionMessage called 3 times — only the last one is checked (bug)
+
+  RequestResolverTest:48-53:
+  $this->expectExceptionMessage('A file is required.');
+  $this->expectExceptionMessage('Supported source formats are csv, json, xlsx, ods.');
+  $this->expectExceptionMessage('Supported target formats are json, xml.');
+
+  expectExceptionMessage is a simple property setter ($this->expectedExceptionMessage = $message). Each call overwrites the previous one. Only 'Supported target formats
+  are json, xml.' is actually checked. If someone removed the file-required or source-format validation, this test would still pass.
+
+  Fix: use a single assertStringContainsString per expected fragment on the caught exception, or use expectExceptionMessageMatches with a regex matching all three.
+
+  2. Missing coverage: status endpoint 404 and cross-tenant
+
+  ConversionStatusTest only tests the 4 happy-path statuses via a data provider. The controller has two untested paths at ConversionController:69-75:
+
+  - 404 for non-existent conversion
+  - 404 when customer A requests customer B's conversion
+
+  The download tests check cross-tenant access, but the status endpoint doesn't. For a multi-tenant API these matter equally.
+
+## 2026-04-07T15:31:23+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-07T15:32:28+02:00 [gpt-5.4 high]
+do one by one, running `make fix analyze test` before committing. before starting new one, commit nicely changes (including _prompt.md)
+
+## 2026-04-07T15:33:47+02:00 [gpt-5.4 high]
+13. resolveResponseMediaType is duplicated in production code
+
+  Identical logic exists in both ConversionController:174-187 and BadRequestSubscriber:53-66. The tests exercise both copies indirectly, but if one drifts the tests won't
+   catch the inconsistency. Extract to a shared service or utility.
+
+  14. Dead code in controller: is_resource check
+
+  ConversionController:142-148 — readStream() either returns a resource or throws FilesystemException. The !is_resource($stream) branch is unreachable. Same for the
+  default => 'application/octet-stream' in downloadMediaType() — targetFormat is validated to only be json or xml. Neither path can be triggered, so they can't be tested.
+   Consider removing them.
+
+## 2026-04-07T15:37:36+02:00 [gpt-5.4 high]
+lets create PathResolver class that can help us unify all the logic where uploaded and converted paths are without duplication
+
+## 2026-04-07T15:54:18+02:00 [gpt-5.4 high]
+lets create PathResolver class that can help us unify all the logic where uploaded and converted paths are without duplication
+

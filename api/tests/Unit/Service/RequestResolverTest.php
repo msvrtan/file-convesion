@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service;
 
 use App\Model\BadRequest;
 use App\Service\RequestResolver;
+use App\Tests\UsesFixtureFiles;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,6 +16,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class RequestResolverTest extends TestCase
 {
+    use UsesFixtureFiles;
+
     private RequestResolver $requestResolver;
 
     protected function setUp(): void
@@ -46,12 +49,20 @@ final class RequestResolverTest extends TestCase
     {
         $request = new Request(request: ['targetFormat' => 'yaml']);
 
-        $this->expectException(BadRequest::class);
-        $this->expectExceptionMessage('A file is required.');
-        $this->expectExceptionMessage('Supported source formats are csv, json, xlsx, ods.');
-        $this->expectExceptionMessage('Supported target formats are json, xml.');
-
-        $this->requestResolver->convertRequest($request, new UuidV7(), new UuidV7());
+        try {
+            $this->requestResolver->convertRequest($request, new UuidV7(), new UuidV7());
+            self::fail('Expected BadRequest to be thrown.');
+        } catch (BadRequest $exception) {
+            self::assertStringContainsString('A file is required.', $exception->getMessage());
+            self::assertStringContainsString(
+                'Supported source formats are csv, json, xlsx, ods.',
+                $exception->getMessage(),
+            );
+            self::assertStringContainsString(
+                'Supported target formats are json, xml.',
+                $exception->getMessage(),
+            );
+        }
     }
 
     public function testItAcceptsUppercaseFileExtensions(): void
@@ -103,20 +114,5 @@ final class RequestResolverTest extends TestCase
         return Validation::createValidatorBuilder()
             ->enableAttributeMapping()
             ->getValidator();
-    }
-
-    private static function createFixtureUpload(string $fixtureName = 'sample.json', ?string $clientName = null): UploadedFile
-    {
-        return new UploadedFile(
-            self::fixturePath($fixtureName),
-            $clientName ?? $fixtureName,
-            'application/json',
-            test: true,
-        );
-    }
-
-    private static function fixturePath(string $filename): string
-    {
-        return dirname(__DIR__, 2).'/Fixtures/'.$filename;
     }
 }

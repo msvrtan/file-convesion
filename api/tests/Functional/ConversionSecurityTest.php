@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
+use App\Tests\UsesFixtureFiles;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ConversionSecurityTest extends WebTestCase
 {
+    use AuthenticatesCustomer;
+    use UsesFixtureFiles;
+
     private const ACME_CONVERSION_ID = '019d86b0-0000-7000-8000-000000000001';
 
     private KernelBrowser $client;
@@ -22,9 +25,21 @@ final class ConversionSecurityTest extends WebTestCase
         $this->client = self::createClient();
     }
 
+    protected function browser(): KernelBrowser
+    {
+        return $this->client;
+    }
+
     public function testInvalidJwtCannotAccessCreateConversion(): void
     {
         $this->requestCreateConversion('Bearer wRoNgTokEn');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testMissingJwtCannotAccessCreateConversion(): void
+    {
+        $this->requestCreateConversion();
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
@@ -36,9 +51,23 @@ final class ConversionSecurityTest extends WebTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
 
+    public function testMissingJwtCannotAccessConversionStatus(): void
+    {
+        $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
     public function testInvalidJwtCannotAccessConversionDownload(): void
     {
         $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2/download', 'Bearer wRoNgTokEn');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testMissingJwtCannotAccessConversionDownload(): void
+    {
+        $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2/download');
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
@@ -79,69 +108,35 @@ final class ConversionSecurityTest extends WebTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
     }
 
-    private function createJwtToken(string $username): string
+    private function requestCreateConversion(?string $authorization = null): void
     {
-        $this->client->request(
-            'POST',
-            '/auth/token',
-            server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode([
-                'username' => $username,
-                'password' => AppFixtures::DEFAULT_PASSWORD,
-            ], JSON_THROW_ON_ERROR),
-        );
+        $server = [];
 
-        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        if (null !== $authorization) {
+            $server['HTTP_AUTHORIZATION'] = $authorization;
+        }
 
-        $content = $this->client->getResponse()->getContent();
-        self::assertIsString($content);
-
-        /** @var array{token?: mixed} $payload */
-        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-
-        self::assertArrayHasKey('token', $payload);
-        self::assertIsString($payload['token']);
-        self::assertNotSame('', $payload['token']);
-
-        return $payload['token'];
-    }
-
-    private function requestCreateConversion(string $authorization): void
-    {
         $this->client->request(
             'POST',
             '/conversions',
             ['targetFormat' => 'json'],
-            ['file' => self::createFixtureUpload()],
-            server: [
-                'HTTP_AUTHORIZATION' => $authorization,
-            ],
+            ['file' => self::createFixtureUpload('sample.csv', 'sample.csv', 'text/csv')],
+            server: $server,
         );
     }
 
-    private function requestAuthenticated(string $method, string $uri, string $authorization): void
+    private function requestAuthenticated(string $method, string $uri, ?string $authorization = null): void
     {
+        $server = [];
+
+        if (null !== $authorization) {
+            $server['HTTP_AUTHORIZATION'] = $authorization;
+        }
+
         $this->client->request(
             $method,
             $uri,
-            server: [
-                'HTTP_AUTHORIZATION' => $authorization,
-            ],
+            server: $server,
         );
-    }
-
-    private static function createFixtureUpload(): UploadedFile
-    {
-        return new UploadedFile(
-            self::fixturePath('sample.csv'),
-            'sample.csv',
-            'text/csv',
-            test: true,
-        );
-    }
-
-    private static function fixturePath(string $filename): string
-    {
-        return dirname(__DIR__).'/Fixtures/'.$filename;
     }
 }

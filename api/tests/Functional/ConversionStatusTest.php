@@ -12,12 +12,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class ConversionStatusTest extends WebTestCase
 {
+    use AuthenticatesCustomer;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+    }
+
+    protected function browser(): KernelBrowser
+    {
+        return $this->client;
     }
 
     #[DataProvider('statusProvider')]
@@ -88,28 +95,80 @@ final class ConversionStatusTest extends WebTestCase
         ];
     }
 
-    private function createJwtToken(string $username): string
+    public function testNonExistentConversionReturns404(): void
     {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
         $this->client->request(
-            'POST',
-            '/auth/token',
-            server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode([
-                'username' => $username,
-                'password' => AppFixtures::DEFAULT_PASSWORD,
-            ], JSON_THROW_ON_ERROR),
+            'GET',
+            '/conversions/019d86b0-0000-7000-8000-999999999999',
+            server: [
+                'HTTP_ACCEPT' => 'application/json',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
         );
 
-        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertResponseHeaderSame('content-type', 'application/json');
 
         $content = $this->client->getResponse()->getContent();
         self::assertIsString($content);
 
-        /** @var array{token?: mixed} $payload */
+        /** @var array{message?: mixed} $payload */
         $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
-        self::assertIsString($payload['token'] ?? null);
+        self::assertSame('Conversion not found.', $payload['message'] ?? null);
+    }
 
-        return $payload['token'];
+    public function testAnotherCustomerConversionReturns404(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'GET',
+            '/conversions/019d86b0-0000-7000-8000-000000000004',
+            server: [
+                'HTTP_ACCEPT' => 'application/json',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{message?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Conversion not found.', $payload['message'] ?? null);
+    }
+
+    public function testStatusCanBeReturnedAsXml(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::UMBRELLA_USERNAME);
+
+        $this->client->request(
+            'GET',
+            '/conversions/019d86b0-0000-7000-8000-000000000004',
+            server: [
+                'HTTP_ACCEPT' => 'application/xml',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertResponseHeaderSame('content-type', 'application/xml');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $payload = simplexml_load_string($content);
+        self::assertInstanceOf(\SimpleXMLElement::class, $payload);
+        self::assertSame('019d86b0-0000-7000-8000-000000000004', (string) $payload->id);
+        self::assertSame('completed', (string) $payload->status);
+        self::assertSame('Your conversion is completed.', (string) $payload->message);
+        self::assertNotSame('', (string) $payload->lastUpdate);
     }
 }
