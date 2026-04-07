@@ -163,6 +163,33 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertSame('accepted', $payload['status'] ?? null);
     }
 
+    public function testHappyPathUsesXmlWhenAcceptHeaderRequestsXml(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'xml'],
+            ['file' => self::createFixtureUpload()],
+            server: [
+                'HTTP_ACCEPT' => 'application/xml',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
+        self::assertResponseHeaderSame('content-type', 'application/xml');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $payload = simplexml_load_string($content);
+        self::assertInstanceOf(\SimpleXMLElement::class, $payload);
+        self::assertTrue(Uuid::isValid((string) $payload->id));
+        self::assertSame('accepted', (string) $payload->status);
+    }
+
     public function testHappyPathDefaultsToJsonWhenAcceptHeaderIsWildcard(): void
     {
         $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);

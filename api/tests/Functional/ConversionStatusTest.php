@@ -144,4 +144,31 @@ final class ConversionStatusTest extends WebTestCase
 
         self::assertSame('Conversion not found.', $payload['message'] ?? null);
     }
+
+    public function testStatusCanBeReturnedAsXml(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::UMBRELLA_USERNAME);
+
+        $this->client->request(
+            'GET',
+            '/conversions/019d86b0-0000-7000-8000-000000000004',
+            server: [
+                'HTTP_ACCEPT' => 'application/xml',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertResponseHeaderSame('content-type', 'application/xml');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        $payload = simplexml_load_string($content);
+        self::assertInstanceOf(\SimpleXMLElement::class, $payload);
+        self::assertSame('019d86b0-0000-7000-8000-000000000004', (string) $payload->id);
+        self::assertSame('completed', (string) $payload->status);
+        self::assertSame('Your conversion is completed.', (string) $payload->message);
+        self::assertNotSame('', (string) $payload->lastUpdate);
+    }
 }
