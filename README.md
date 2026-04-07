@@ -43,10 +43,10 @@ Six test users are pre-seeded with the password `customer-password` — see [`Ap
 
 1. Client authenticates via `POST /auth/token` to get a JWT
 2. Client uploads a file via `POST /conversions` with the desired output format
-3. Server creates a `Conversion` entity (status: `accepted`) and dispatches an async message
-4. Messenger worker picks up the job, transitions status through `in_progress` to `completed` or `errored`
-5. Client polls `GET /conversions/{id}` for status 'completed' status
-6. Once complete, client downloads the result via `GET /conversions/{id}/download`
+3. Server creates a `Conversion` entity with status `accepted` and dispatches an async message
+4. Messenger worker transitions the job through `inprogress` to either `completed` or `failed`
+5. Client polls `GET /conversions/{id}` until the status reaches a terminal state (`completed` or `failed`)
+6. If the job completed, client downloads the result via `GET /conversions/{id}/download`; if it failed, client handles the failure accordingly
 
 ## Design Decisions
 
@@ -55,4 +55,3 @@ Six test users are pre-seeded with the password `customer-password` — see [`Ap
 - **UUIDv7 for primary keys** — ID generation is not database-bound. The v7 variant uses a time-ordered prefix, so IDs fill database indexes sequentially.
 - **Accept header simplification** — Instead of exhaustive content negotiation, the API expects `application/json` or `application/xml` (defaulting to JSON when absent).
 - **`Response::HTTP_*` constants** — Code and tests use named constants (`Response::HTTP_OK`, `Response::HTTP_NOT_FOUND`) instead of numeric status codes for readability.
-
