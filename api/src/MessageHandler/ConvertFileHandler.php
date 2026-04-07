@@ -100,13 +100,13 @@ final class ConvertFileHandler
         );
     }
 
-    public function markAsProcessingStarted(Conversion $entity): void
+    private function markAsProcessingStarted(Conversion $entity): void
     {
         $entity->markAsProcessingStarted();
         $this->conversionRepository->save($entity);
     }
 
-    public function markAsCompleted(Conversion $entity): void
+    private function markAsCompleted(Conversion $entity): void
     {
         $entity->markAsCompleted();
         $this->conversionRepository->save($entity);
