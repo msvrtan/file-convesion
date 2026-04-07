@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
-use App\Tests\UsesFixtureFiles;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
+use App\Tests\UsesFixtureFiles;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -381,5 +381,4 @@ final class ConversionAcceptTest extends WebTestCase
 
         return $defaultStorage;
     }
-
 }

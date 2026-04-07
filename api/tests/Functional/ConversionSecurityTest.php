@@ -139,5 +139,4 @@ final class ConversionSecurityTest extends WebTestCase
             server: $server,
         );
     }
-
 }

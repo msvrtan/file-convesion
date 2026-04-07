@@ -229,5 +229,4 @@ final class AcceptConversionTest extends TestCase
             'xml',
         );
     }
-
 }

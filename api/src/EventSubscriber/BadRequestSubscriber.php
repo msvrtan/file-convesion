@@ -50,5 +50,4 @@ final class BadRequestSubscriber implements EventSubscriberInterface
             ),
         );
     }
-
 }

@@ -107,5 +107,4 @@ final class RequestResolverTest extends TestCase
             ->enableAttributeMapping()
             ->getValidator();
     }
-
 }
