@@ -6,6 +6,7 @@ namespace App\Tests\Unit\MessageHandler;
 
 use App\Entity\Conversion;
 use App\MessageHandler\ConvertFileHandler;
+use App\Model\ConversionStatus;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
 use App\Service\FileConverter\FileConverter;
@@ -39,14 +40,12 @@ final class ConvertFileHandlerTest extends TestCase
 
     public function testItReadsSourceConvertsItAndStoresConvertedContent(): void
     {
-        $id = new UuidV7();
-        $ownerId = new UuidV7();
-        $message = new ConvertFile($id, $ownerId);
-        $conversion = new Conversion($id, $ownerId, 'json', 'xml');
+        [$message, $conversion] = self::createMessageAndConversion();
+        $saveCount = 0;
 
         $this->conversionRepository->expects(self::once())
             ->method('load')
-            ->with($id, $ownerId)
+            ->with($message->getId(), $message->getOwnerId())
             ->willReturn($conversion);
         $this->conversionRepository->expects(self::exactly(2))
             ->method('save')
@@ -54,10 +53,27 @@ final class ConvertFileHandlerTest extends TestCase
                 self::assertSame($conversion, $savedConversion);
 
                 return true;
-            }));
+            }))
+            ->willReturnCallback(function (Conversion $savedConversion) use (&$saveCount): void {
+                ++$saveCount;
+
+                if (1 === $saveCount) {
+                    self::assertSame(ConversionStatus::InProgress, $savedConversion->getStatus());
+                    self::assertNotNull($savedConversion->getProcessingStartedAt());
+                    self::assertNull($savedConversion->getProcessingEndedAt());
+                    self::assertNull($savedConversion->getMessage());
+
+                    return;
+                }
+
+                self::assertSame(ConversionStatus::Completed, $savedConversion->getStatus());
+                self::assertNotNull($savedConversion->getProcessingStartedAt());
+                self::assertNotNull($savedConversion->getProcessingEndedAt());
+                self::assertNull($savedConversion->getMessage());
+            });
         $this->defaultStorage->expects(self::once())
             ->method('read')
-            ->with(sprintf('uploads/%s/%s.json', $ownerId, $id))
+            ->with(sprintf('uploads/%s/%s.json', $message->getOwnerId(), $message->getId()))
             ->willReturn('{"country":"Croatia"}');
         $this->fileConverter->expects(self::once())
             ->method('convert')
@@ -66,7 +82,7 @@ final class ConvertFileHandlerTest extends TestCase
         $this->defaultStorage->expects(self::once())
             ->method('write')
             ->with(
-                sprintf('converted/%s/%s.xml', $ownerId, $id),
+                sprintf('converted/%s/%s.xml', $message->getOwnerId(), $message->getId()),
                 '<root><country>Croatia</country></root>',
             );
 
@@ -92,5 +108,207 @@ final class ConvertFileHandlerTest extends TestCase
         $this->expectExceptionMessage('Conversion not found.');
 
         ($this->handler)($message);
+    }
+
+    public function testItPropagatesFailureWhenProcessingStartCannotBeSaved(): void
+    {
+        [$message, $conversion] = self::createMessageAndConversion();
+        $exception = new \RuntimeException('Unable to persist processing start.');
+
+        $this->conversionRepository->expects(self::once())
+            ->method('load')
+            ->with($message->getId(), $message->getOwnerId())
+            ->willReturn($conversion);
+        $this->conversionRepository->expects(self::once())
+            ->method('save')
+            ->with(self::callback(static function (Conversion $savedConversion) use ($conversion): bool {
+                self::assertSame($conversion, $savedConversion);
+                self::assertSame(ConversionStatus::InProgress, $savedConversion->getStatus());
+                self::assertNotNull($savedConversion->getProcessingStartedAt());
+                self::assertNull($savedConversion->getProcessingEndedAt());
+                self::assertNull($savedConversion->getMessage());
+
+                return true;
+            }))
+            ->willThrowException($exception);
+        $this->defaultStorage->expects(self::never())->method('read');
+        $this->defaultStorage->expects(self::never())->method('write');
+        $this->fileConverter->expects(self::never())->method('convert');
+
+        $this->expectExceptionObject($exception);
+
+        ($this->handler)($message);
+    }
+
+    public function testItMarksConversionAsFailedWhenReadingSourceFails(): void
+    {
+        [$message, $conversion] = self::createMessageAndConversion();
+        $saveCount = 0;
+
+        $this->conversionRepository->expects(self::once())
+            ->method('load')
+            ->with($message->getId(), $message->getOwnerId())
+            ->willReturn($conversion);
+        $this->conversionRepository->expects(self::exactly(2))
+            ->method('save')
+            ->willReturnCallback(function (Conversion $savedConversion) use ($conversion, &$saveCount): void {
+                ++$saveCount;
+                self::assertSame($conversion, $savedConversion);
+
+                if (1 === $saveCount) {
+                    self::assertSame(ConversionStatus::InProgress, $savedConversion->getStatus());
+                    self::assertNotNull($savedConversion->getProcessingStartedAt());
+                    self::assertNull($savedConversion->getProcessingEndedAt());
+                    self::assertNull($savedConversion->getMessage());
+
+                    return;
+                }
+
+                self::assertSame(ConversionStatus::Failed, $savedConversion->getStatus());
+                self::assertNotNull($savedConversion->getProcessingStartedAt());
+                self::assertNotNull($savedConversion->getProcessingEndedAt());
+                self::assertSame('Unable to read source file.', $savedConversion->getMessage());
+            });
+        $this->defaultStorage->expects(self::once())
+            ->method('read')
+            ->with(sprintf('uploads/%s/%s.json', $message->getOwnerId(), $message->getId()))
+            ->willThrowException(new \RuntimeException('Unable to read source file.'));
+        $this->defaultStorage->expects(self::never())->method('write');
+        $this->fileConverter->expects(self::never())->method('convert');
+
+        ($this->handler)($message);
+    }
+
+    public function testItMarksConversionAsFailedWhenConversionFails(): void
+    {
+        [$message, $conversion] = self::createMessageAndConversion();
+        $saveCount = 0;
+
+        $this->conversionRepository->expects(self::once())
+            ->method('load')
+            ->with($message->getId(), $message->getOwnerId())
+            ->willReturn($conversion);
+        $this->conversionRepository->expects(self::exactly(2))
+            ->method('save')
+            ->willReturnCallback(function (Conversion $savedConversion) use ($conversion, &$saveCount): void {
+                ++$saveCount;
+                self::assertSame($conversion, $savedConversion);
+
+                if (1 === $saveCount) {
+                    self::assertSame(ConversionStatus::InProgress, $savedConversion->getStatus());
+
+                    return;
+                }
+
+                self::assertSame(ConversionStatus::Failed, $savedConversion->getStatus());
+                self::assertSame('Converter crashed.', $savedConversion->getMessage());
+                self::assertNotNull($savedConversion->getProcessingEndedAt());
+            });
+        $this->defaultStorage->expects(self::once())
+            ->method('read')
+            ->willReturn('{"country":"Croatia"}');
+        $this->defaultStorage->expects(self::never())->method('write');
+        $this->fileConverter->expects(self::once())
+            ->method('convert')
+            ->with('{"country":"Croatia"}', 'json', 'xml')
+            ->willThrowException(new \RuntimeException('Converter crashed.'));
+
+        ($this->handler)($message);
+    }
+
+    public function testItMarksConversionAsFailedWhenWritingConvertedContentFails(): void
+    {
+        [$message, $conversion] = self::createMessageAndConversion();
+        $saveCount = 0;
+
+        $this->conversionRepository->expects(self::once())
+            ->method('load')
+            ->with($message->getId(), $message->getOwnerId())
+            ->willReturn($conversion);
+        $this->conversionRepository->expects(self::exactly(2))
+            ->method('save')
+            ->willReturnCallback(function (Conversion $savedConversion) use ($conversion, &$saveCount): void {
+                ++$saveCount;
+                self::assertSame($conversion, $savedConversion);
+
+                if (1 === $saveCount) {
+                    self::assertSame(ConversionStatus::InProgress, $savedConversion->getStatus());
+
+                    return;
+                }
+
+                self::assertSame(ConversionStatus::Failed, $savedConversion->getStatus());
+                self::assertSame('Unable to store converted file.', $savedConversion->getMessage());
+                self::assertNotNull($savedConversion->getProcessingEndedAt());
+            });
+        $this->defaultStorage->expects(self::once())
+            ->method('read')
+            ->willReturn('{"country":"Croatia"}');
+        $this->fileConverter->expects(self::once())
+            ->method('convert')
+            ->willReturn('<root><country>Croatia</country></root>');
+        $this->defaultStorage->expects(self::once())
+            ->method('write')
+            ->with(
+                sprintf('converted/%s/%s.xml', $message->getOwnerId(), $message->getId()),
+                '<root><country>Croatia</country></root>',
+            )
+            ->willThrowException(new \RuntimeException('Unable to store converted file.'));
+
+        ($this->handler)($message);
+    }
+
+    public function testItPropagatesFailureWhenSavingFailedStateFails(): void
+    {
+        [$message, $conversion] = self::createMessageAndConversion();
+        $saveCount = 0;
+        $exception = new \RuntimeException('Unable to persist failed conversion.');
+
+        $this->conversionRepository->expects(self::once())
+            ->method('load')
+            ->with($message->getId(), $message->getOwnerId())
+            ->willReturn($conversion);
+        $this->conversionRepository->expects(self::exactly(2))
+            ->method('save')
+            ->willReturnCallback(function (Conversion $savedConversion) use ($conversion, &$saveCount, $exception): void {
+                ++$saveCount;
+                self::assertSame($conversion, $savedConversion);
+
+                if (1 === $saveCount) {
+                    self::assertSame(ConversionStatus::InProgress, $savedConversion->getStatus());
+
+                    return;
+                }
+
+                self::assertSame(ConversionStatus::Failed, $savedConversion->getStatus());
+                self::assertSame('Converter crashed.', $savedConversion->getMessage());
+
+                throw $exception;
+            });
+        $this->defaultStorage->expects(self::once())
+            ->method('read')
+            ->willReturn('{"country":"Croatia"}');
+        $this->defaultStorage->expects(self::never())->method('write');
+        $this->fileConverter->expects(self::once())
+            ->method('convert')
+            ->willThrowException(new \RuntimeException('Converter crashed.'));
+
+        $this->expectExceptionObject($exception);
+
+        ($this->handler)($message);
+    }
+
+    /**
+     * @return array{ConvertFile, Conversion}
+     */
+    private static function createMessageAndConversion(): array
+    {
+        $id = new UuidV7();
+        $ownerId = new UuidV7();
+
+        return [
+            new ConvertFile($id, $ownerId),
+            new Conversion($id, $ownerId, 'json', 'xml'),
+        ];
     }
 }
