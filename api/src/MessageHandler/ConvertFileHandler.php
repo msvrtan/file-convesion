@@ -28,10 +28,20 @@ final class ConvertFileHandler
     public function __invoke(ConvertFile $message): void
     {
         $entity = $this->loadConversion($message);
-        $sourceContent = $this->loadSourceContent($entity);
-        $convertedContent = $this->convertContent($entity, $sourceContent);
 
-        $this->storeConvertedContent($entity, $convertedContent);
+        $this->markAsProcessingStarted($entity);
+
+        try {
+            $sourceContent = $this->loadSourceContent($entity);
+            $convertedContent = $this->convertContent($entity, $sourceContent);
+
+            $this->storeConvertedContent($entity, $convertedContent);
+
+            $this->markAsCompleted($entity);
+        } catch (\Throwable $e) {
+            $entity->markAsFailed($e->getMessage());
+            $this->conversionRepository->save($entity);
+        }
     }
 
     private function loadConversion(ConvertFile $message): Conversion
@@ -88,5 +98,17 @@ final class ConvertFileHandler
             $conversion->getId(),
             $conversion->getTargetFormat(),
         );
+    }
+
+    public function markAsProcessingStarted(Conversion $entity): void
+    {
+        $entity->markAsProcessingStarted();
+        $this->conversionRepository->save($entity);
+    }
+
+    public function markAsCompleted(Conversion $entity): void
+    {
+        $entity->markAsCompleted();
+        $this->conversionRepository->save($entity);
     }
 }

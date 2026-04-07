@@ -26,7 +26,7 @@ final class ConvertFileHandlerTest extends TestCase
         $this->defaultStorage = $this->createMock(FilesystemOperator::class);
         $this->conversionRepository = $this->getMockBuilder(ConversionRepository::class)
             ->disableOriginalConstructor()
-            ->onlyMethods(['load'])
+            ->onlyMethods(['load', 'save'])
             ->getMock();
         $this->fileConverter = $this->createMock(FileConverter::class);
 
@@ -48,6 +48,13 @@ final class ConvertFileHandlerTest extends TestCase
             ->method('load')
             ->with($id, $ownerId)
             ->willReturn($conversion);
+        $this->conversionRepository->expects(self::exactly(2))
+            ->method('save')
+            ->with(self::callback(static function (Conversion $savedConversion) use ($conversion): bool {
+                self::assertSame($conversion, $savedConversion);
+
+                return true;
+            }));
         $this->defaultStorage->expects(self::once())
             ->method('read')
             ->with(sprintf('uploads/%s/%s.json', $ownerId, $id))
@@ -76,6 +83,7 @@ final class ConvertFileHandlerTest extends TestCase
             ->method('load')
             ->with($id, $ownerId)
             ->willReturn(null);
+        $this->conversionRepository->expects(self::never())->method('save');
         $this->defaultStorage->expects(self::never())->method('read');
         $this->defaultStorage->expects(self::never())->method('write');
         $this->fileConverter->expects(self::never())->method('convert');
