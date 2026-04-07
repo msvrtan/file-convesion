@@ -108,3 +108,165 @@ create data about 10 countries in the world and add 5-10 columns
 take that data and store it as csv,xml,json, xslx and ods
 name them sample.{extension}
 
+## 2026-04-04T19:50:24+02:00 [gpt-5.4 high]
+please add validation on ConversionRequest where file must exist and have extension csv,json,xslx,ods
+
+## 2026-04-04T19:51:01+02:00 [gpt-5.4 high]
+source format must be one of those extensions too
+
+## 2026-04-04T19:51:15+02:00 [gpt-5.4 high]
+target format must be json or xml
+
+## 2026-04-04T20:06:19+02:00 [gpt-5.4 high]
+please update security test to include uploaded file with csv extension and has targetFormat defined as json
+
+## 2026-04-04T20:11:08+02:00 [gpt-5.4 high]
+please rewrite security tests so that payloads to POST /conversions include csv file and targetFormat 'json'
+
+## 2026-04-04T20:15:24+02:00 [gpt-5.4 high]
+please sort out phpstan complaints
+
+## 2026-04-04T20:25:09+02:00 [gpt-5.4 high]
+lets remove data providers and make tests clean and understandable
+
+## 2026-04-04T20:28:26+02:00 [gpt-5.4 high]
+please add functional test, setting up happy path for accept endpoint
+
+## 2026-04-04T20:40:02+02:00 [gpt-5.4 high]
+finish up test
+
+## 2026-04-05T07:39:47+02:00 [gpt-5.4 high]
+use sample files in ConversionSecurityTest
+
+## 2026-04-05T07:40:23+02:00 [gpt-5.4 high]
+same in ConversionAcceptTest
+
+## 2026-04-05T07:55:09+02:00 [gpt-5.4 high]
+please create conversion entity, id: Uuid, ownerId: Uuid, sourceFormat: string, targetFormat: string, message as ?string, createdAt as DateTime, processingStartedAt as ?DateTime, processingEndedAt as ?DateTime
+
+## 2026-04-05T07:57:45+02:00 [gpt-5.4 high]
+create load method in repository that takes both id and ownerId
+
+## 2026-04-05T07:58:05+02:00 [gpt-5.4 high]
+create save method in repo that calls persist and then flush
+
+## 2026-04-05T07:58:36+02:00 [gpt-5.4 high]
+please commit
+
+## 2026-04-05T08:03:24+02:00 [gpt-5.4 high]
+lets define in Model namespace ConversionStatus, enum backed by int Accepted:0,InProgress:2,Failed:4,Completed:7 . also add asString() method that will return their lower case values
+
+## 2026-04-05T08:03:56+02:00 [gpt-5.4 high]
+can we make that enum Stringable?
+
+## 2026-04-05T08:05:52+02:00 [gpt-5.4 high]
+before message in Conversion entity, include ConversionStatus, in constructor set it to Accepted and give it a getter
+
+## 2026-04-05T08:10:48+02:00 [gpt-5.4 high]
+please add to happy path test a check that there is a record in conversion database matching that id an ownerId
+
+## 2026-04-05T08:15:33+02:00 [gpt-5.4 high]
+make ConvertFile in Model namespace, hoding just id & ownerId in Uuid format
+
+## 2026-04-05T08:16:33+02:00 [gpt-5.4 high]
+please commit changes together with _prompt.md
+
+## 2026-04-05T08:18:40+02:00 [gpt-5.4 high]
+please add to happy path test a check that there is a message in queue matching that id an ownerId
+
+## 2026-04-05T08:19:41+02:00 [gpt-5.4 high]
+fix phpstan complaints
+
+## 2026-04-05T08:49:46+02:00 [gpt-5.4 high]
+please commit
+
+## 2026-04-05T08:52:59+02:00 [gpt-5.4 high]
+what exceptions can publishConversion throw?
+
+## 2026-04-05T08:53:34+02:00 [gpt-5.4 high]
+please note them in header of the method
+
+## 2026-04-05T08:56:41+02:00 [gpt-5.4 high]
+what exceptions can publishConversi throw?
+
+## 2026-04-05T08:56:59+02:00 [gpt-5.4 high]
+what exceptions can buildAndSaveConversion throw? note them in header of the method
+
+## 2026-04-05T09:00:34+02:00 [gpt-5.4 high]
+what exceptions can moveFileToUploadSection throw? note them in header of the method
+
+## 2026-04-05T09:13:28+02:00 [gpt-5.4 high]
+please create in model namespace BadRequest exception
+
+## 2026-04-05T09:15:23+02:00 [gpt-5.4 high]
+please create and configure listener for that exception that will return it as response with Response::HTTP_BAD_REQUEST , using content type based on http's accept header if json or xml, otherwise default is json
+
+## 2026-04-05T09:19:27+02:00 [gpt-5.4 high]
+please add to happy path test check that file was moved where we expected it to be
+
+## 2026-04-05T09:31:53+02:00 [gpt-5.4 high]
+lets extract convertRequest() insides into RequestResolver service
+
+## 2026-04-05T09:32:53+02:00 [gpt-5.4 high]
+no, leave original method so we keep in main method only intent and not implementation
+
+## 2026-04-05T09:33:42+02:00 [gpt-5.4 high]
+please create unit tests for RequestResolver
+
+## 2026-04-05T09:34:55+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-05T09:37:24+02:00 [gpt-5.4 high]
+lets open AcceptConversion service and in the main method keep intension from endpoint and do all 3 steps as implementation level like now
+
+## 2026-04-05T09:38:59+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-05T09:40:14+02:00 [gpt-5.4 high]
+create unit tests for AcceptConversion
+
+## 2026-04-05T09:42:05+02:00 [gpt-5.4 high]
+please create tests for each possible exception that service can throw
+
+## 2026-04-05T09:44:01+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-05T09:44:57+02:00 [gpt-5.4 high]
+Review the code changes against the base branch 'main'. The merge base commit for this comparison is f48213a1794b6f6644949e0f9140409b7de5a3b3. Run `git diff f48213a1794b6f6644949e0f9140409b7de5a3b3` to inspect the changes relative to main. Provide prioritized, actionable findings.
+
+## 2026-04-05T09:47:26+02:00 [gpt-5.4 high]
+make actionable notes in review.md file
+
+## 2026-04-05T09:49:39+02:00 [gpt-5.4 high]
+commit review, start working on first item with added tests
+
+## 2026-04-05T09:51:31+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-05T09:54:55+02:00 [gpt-5.4 high]
+start working on second item with added tests
+
+## 2026-04-05T09:56:33+02:00 [gpt-5.4 high]
+commit and start working on third item
+
+## 2026-04-05T09:58:19+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-05T09:58:47+02:00 [gpt-5.4 high]
+Review the code changes against the base branch 'main'. The merge base commit for this comparison is f48213a1794b6f6644949e0f9140409b7de5a3b3. Run `git diff f48213a1794b6f6644949e0f9140409b7de5a3b3` to inspect the changes relative to main. Provide prioritized, actionable findings.
+
+## 2026-04-05T10:04:14+02:00 [gpt-5.4 high]
+please overwrite existing review.md
+
+## 2026-04-05T10:04:55+02:00 [gpt-5.4 high]
+commit changes, solve first issue
+
+## 2026-04-05T10:08:44+02:00 [gpt-5.4 high]
+commit and fix second issue
+
+## 2026-04-05T10:09:57+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-05T10:25:42+02:00 [gpt-5.4 high]
+fix tests please
+
