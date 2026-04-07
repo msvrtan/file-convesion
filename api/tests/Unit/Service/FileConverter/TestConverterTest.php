@@ -17,8 +17,8 @@ final class TestConverterTest extends TestCase
         $this->converter = new TestConverter();
     }
 
-    #[DataProvider('supportedTargetFormats')]
-    public function testItLoadsSampleFixtureForTargetFormat(string $targetFormat): void
+    #[DataProvider('supportedFormats')]
+    public function testItLoadsSampleFiles(string $targetFormat): void
     {
         $convertedContent = $this->converter->convert('ignored', 'json', $targetFormat);
 
@@ -31,7 +31,7 @@ final class TestConverterTest extends TestCase
     /**
      * @return list<array{string}>
      */
-    public static function supportedTargetFormats(): array
+    public static function supportedFormats(): array
     {
         return [
             ['csv'],
