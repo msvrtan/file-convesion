@@ -2,6 +2,10 @@
 
 This project is a Symfony API for long-running file conversion jobs. It accepts `CSV`, `JSON`, `XLSX`, and `ODS` files, produces `JSON` or `XML`, and exposes endpoints to submit a job, check status, and download the result. The implementation is intentionally reviewer-friendly, with JWT auth, async processing, API docs, and test coverage as first-class concerns.
 
+## Review Note
+
+The branch history has been squash-merged, so the commits in this branch are intentionally condensed. Reviewers who want the step-by-step implementation details, intermediate decisions, or discussion context should inspect the individual pull requests.
+
 
 **Supported input formats:** CSV, JSON, XLSX, ODS
 **Supported output formats:** JSON, XML
