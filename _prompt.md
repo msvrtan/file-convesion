@@ -593,3 +593,7 @@ commit
 ## 2026-04-07T18:36:31+02:00 [gpt-5.4 high]
 create pr
 
+## 2026-04-07T19:54:42+02:00 [gpt-5.4 high]
+add explanation to README.md covering that PR's have been squashed and that reviewers if interested in details should check PRs
+
+
