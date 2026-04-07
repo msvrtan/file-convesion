@@ -129,15 +129,21 @@ final class ConversionController extends AbstractController
         );
 
         $stream = $this->defaultStorage->readStream($path);
+
+        if (!\is_resource($stream)) {
+            $payload = [
+                'message' => 'Converted file not found.',
+            ];
+
+            return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
+        }
+
         $filename = sprintf('%s.%s', $entity->getId(), $entity->getTargetFormat());
 
         return new StreamedResponse(
             function () use ($stream): void {
                 fpassthru($stream);
-
-                if (\is_resource($stream)) {
-                    fclose($stream);
-                }
+                fclose($stream);
             },
             Response::HTTP_OK,
             [
