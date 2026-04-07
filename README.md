@@ -32,14 +32,78 @@ symfony server:start
 php bin/console messenger:consume async -vv
 ```
 
+### OpenAPI documentation
+
+The generated OpenAPI spec is available at `GET /doc.json`, and the Swagger UI is available at `GET /doc`.
+
 ### Pre-seeded credentials
 
 Six test users are pre-seeded with the password `customer-password` — see [`AppFixtures`](api/src/DataFixtures/AppFixtures.php) for usernames and UUIDs.
 
+## API Usage
+
+Run these examples from the `api/` directory while the Symfony server and Messenger worker are running.
+
+### Get a JWT
+
+```bash
+curl -X POST http://127.0.0.1:8000/auth/token \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"acme-corp","password":"customer-password"}'
+```
+
+### Submit a conversion
+
+Replace `<TOKEN>` with the JWT from the previous response.
+
+```bash
+curl -X POST http://127.0.0.1:8000/conversions \
+  -H 'Accept: application/json' \
+  -H "Authorization: Bearer <TOKEN>" \
+  -F targetFormat=xml \
+  -F file=@tests/Fixtures/sample.csv
+```
+
+### Check status
+
+Replace `<CONVERSION_ID>` with the `id` returned by `POST /conversions`.
+
+```bash
+curl http://127.0.0.1:8000/conversions/<CONVERSION_ID> \
+  -H 'Accept: application/json' \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+### Download the converted file
+
+```bash
+curl http://127.0.0.1:8000/conversions/<CONVERSION_ID>/download \
+  -H "Authorization: Bearer <TOKEN>" \
+  -o converted.xml
+```
+
+## Quality Checks
+
+Run these commands from the `api/` directory:
+
+```bash
+make lint
+make fix
+make analyse
+make test
+```
+
 ## Architecture Overview
 
+This API is split into a small HTTP layer, an application layer for request handling and path resolution, and an async worker for conversion execution.
 
-### Request flow
+- **HTTP/API layer**: Symfony controllers expose `POST /auth/token`, `POST /conversions`, `GET /conversions/{id}`, and `GET /conversions/{id}/download`. JWT auth protects the conversion endpoints, and response content negotiation is limited to JSON and XML.
+- **Persistence layer**: SQLite stores customers, conversions, and Messenger transport records. `Conversion` entities track ownership, source and target formats, lifecycle status, timestamps, and failure messages.
+- **File storage**: Flysystem writes uploaded source files under `uploads/{ownerId}/{conversionId}.{ext}` and converted output files under `converted/{ownerId}/{conversionId}.{ext}` on the local filesystem.
+- **Async processing**: Accepting a conversion dispatches an `App\Model\ConvertFile` message to Symfony Messenger. A worker consumes that message, loads the stored source file, runs the configured converter strategy, writes the converted result, and updates conversion state to `completed` or `failed`.
+- **Testing setup**: Unit tests cover services and entities, functional tests cover HTTP contracts and security boundaries, and an end-to-end test exercises the full async flow with Doctrine Messenger transport.
+
+## Request Flow
 
 1. Client authenticates via `POST /auth/token` to get a JWT
 2. Client uploads a file via `POST /conversions` with the desired output format

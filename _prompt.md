@@ -557,3 +557,39 @@ please do
 ## 2026-04-07T16:10:19+02:00 [gpt-5.4 high]
 update
 
+## 2026-04-07T16:12:33+02:00 [gpt-5.4 high]
+please generate open api documentation
+## 2026-04-07T16:42:21+02:00 [gpt-5.4 high]
+Test naming convention: docs say snake_case, code uses camelCase                                                                                                     
+                                                                                                                                                                          
+  - docs/engineering-requirements.md:88: Snake case naming: test_it_rejects_unsupported_file_type                                                                         
+  - All 30+ test methods use camelCase: testCustomerCanSubmitConversionRequest, testItRequiresUuidV7Ids, etc.
+
+## 2026-04-07T16:44:36+02:00 [gpt-5.4 high]
+End-to-end tests claimed but don't exist                                                                                                                             
+                                                                                                                                                                          
+  - docs/engineering-requirements.md:87: "Unit tests, functional tests, and end-to-end tests"                                                                             
+  - docs/engineering-requirements.md:100: "Unit, functional, and end-to-end tests pass"
+  - Only tests/Unit/ and tests/Functional/ directories exist. No E2E tests (a full auth -> upload -> worker processes -> poll status -> download flow) exist anywhere.
+
+## 2026-04-07T16:45:18+02:00 [gpt-5.4 high]
+no, i would like you to create e2e test
+## 2026-04-07T18:23:54+02:00 [gpt-5.4 high]
+please check if any inconsistencies are between docs and code
+
+## 2026-04-07T18:25:29+02:00 [gpt-5.4 high]
+the engineering doc still promises README content that does not exist. docs/engineering-requirements.md:71 says the README includes API usage examples and
+    test-running instructions, but README.md:10 only covers setup, startup, OpenAPI docs, credentials, architecture, and design notes. There are no curl examples and no
+    explicit section for running make test, make analyse, or make lint.
+## 2026-04-07T18:28:02+02:00 [gpt-5.4 high]
+I feel there is missing actual architectural overview in README.md, I would like to move flow out of architecture section to it's own and actually fill in overview
+
+## 2026-04-07T18:28:24+02:00 [gpt-5.4 high]
+please suggest changes
+
+## 2026-04-07T18:31:26+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-07T18:36:31+02:00 [gpt-5.4 high]
+create pr
+
