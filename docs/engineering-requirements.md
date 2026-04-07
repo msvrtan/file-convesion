@@ -85,7 +85,7 @@ Based on the [business requirements](business-requirements.md), this document de
 ## 4. Testing Strategy
 
 - **Unit tests**, **functional tests**, and **end-to-end tests**
-- Snake case naming: `test_it_rejects_unsupported_file_type`
+- Camel case naming: `testItRejectsUnsupportedFileType`
 - **PHPUnit** via Symfony test framework
 
 ---

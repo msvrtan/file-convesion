@@ -559,3 +559,9 @@ update
 
 ## 2026-04-07T16:12:33+02:00 [gpt-5.4 high]
 please generate open api documentation
+## 2026-04-07T16:42:21+02:00 [gpt-5.4 high]
+Test naming convention: docs say snake_case, code uses camelCase                                                                                                     
+                                                                                                                                                                          
+  - docs/engineering-requirements.md:88: Snake case naming: test_it_rejects_unsupported_file_type                                                                         
+  - All 30+ test methods use camelCase: testCustomerCanSubmitConversionRequest, testItRequiresUuidV7Ids, etc.
+
