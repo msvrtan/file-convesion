@@ -565,3 +565,12 @@ Test naming convention: docs say snake_case, code uses camelCase
   - docs/engineering-requirements.md:88: Snake case naming: test_it_rejects_unsupported_file_type                                                                         
   - All 30+ test methods use camelCase: testCustomerCanSubmitConversionRequest, testItRequiresUuidV7Ids, etc.
 
+## 2026-04-07T16:44:36+02:00 [gpt-5.4 high]
+End-to-end tests claimed but don't exist                                                                                                                             
+                                                                                                                                                                          
+  - docs/engineering-requirements.md:87: "Unit tests, functional tests, and end-to-end tests"                                                                             
+  - docs/engineering-requirements.md:100: "Unit, functional, and end-to-end tests pass"
+  - Only tests/Unit/ and tests/Functional/ directories exist. No E2E tests (a full auth -> upload -> worker processes -> poll status -> download flow) exist anywhere.
+
+## 2026-04-07T16:45:18+02:00 [gpt-5.4 high]
+no, i would like you to create e2e test
