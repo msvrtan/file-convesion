@@ -69,11 +69,17 @@ final class ConversionDownloadTest extends WebTestCase
 
     public function testCompletedConversionCanBeDownloaded(): void
     {
-        $conversionId = '019d86b0-0000-7000-8000-000000000004';
+        $conversionId = '019d86b0-0000-7000-8000-000000000010';
         $ownerId = AppFixtures::UMBRELLA_ID;
         $targetFormat = 'xml';
         $fileContent = '<root><item>test content</item></root>';
 
+        $this->createCompletedConversion(
+            ownerId: $ownerId,
+            conversionId: $conversionId,
+            sourceFormat: 'json',
+            targetFormat: $targetFormat,
+        );
         $this->seedConvertedFile($ownerId, $conversionId, $targetFormat, $fileContent);
 
         $token = $this->createJwtToken(AppFixtures::UMBRELLA_USERNAME);
@@ -99,11 +105,17 @@ final class ConversionDownloadTest extends WebTestCase
 
     public function testSecondCompletedConversionCanBeDownloaded(): void
     {
-        $conversionId = '019d86b0-0000-7000-8000-000000000008';
+        $conversionId = '019d86b0-0000-7000-8000-000000000011';
         $ownerId = AppFixtures::GLOBEX_ID;
         $targetFormat = 'xml';
         $fileContent = '<data><row>globex export</row></data>';
 
+        $this->createCompletedConversion(
+            ownerId: $ownerId,
+            conversionId: $conversionId,
+            sourceFormat: 'ods',
+            targetFormat: $targetFormat,
+        );
         $this->seedConvertedFile($ownerId, $conversionId, $targetFormat, $fileContent);
 
         $token = $this->createJwtToken(AppFixtures::GLOBEX_USERNAME);
