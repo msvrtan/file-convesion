@@ -11,6 +11,7 @@ use App\Model\ConversionStatus;
 use App\Repository\ConversionRepository;
 use App\Service\AcceptConversion;
 use App\Service\RequestResolver;
+use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -128,11 +129,19 @@ final class ConversionController extends AbstractController
             $entity->getTargetFormat(),
         );
 
-        $stream = $this->defaultStorage->readStream($path);
+        try {
+            $stream = $this->defaultStorage->readStream($path);
+        } catch (FilesystemException) {
+            $payload = [
+                'message' => 'Conversion not found.',
+            ];
+
+            return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
+        }
 
         if (!\is_resource($stream)) {
             $payload = [
-                'message' => 'Converted file not found.',
+                'message' => 'Conversion not found.',
             ];
 
             return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);

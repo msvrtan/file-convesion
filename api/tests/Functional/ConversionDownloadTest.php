@@ -148,6 +148,34 @@ final class ConversionDownloadTest extends WebTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
     }
 
+    public function testCompletedConversionWithoutStoredFileReturns404(): void
+    {
+        $conversionId = '019d86b0-0000-7000-8000-000000000008';
+        $this->removeConvertedFile(AppFixtures::GLOBEX_ID, $conversionId, 'xml');
+
+        $token = $this->createJwtToken(AppFixtures::GLOBEX_USERNAME);
+
+        $this->client->request(
+            'GET',
+            sprintf('/conversions/%s/download', $conversionId),
+            server: [
+                'HTTP_ACCEPT' => 'application/json',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{message?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Conversion not found.', $payload['message'] ?? null);
+    }
+
     private function createJwtToken(string $username): string
     {
         $this->client->request(
@@ -194,5 +222,20 @@ final class ConversionDownloadTest extends WebTestCase
         }
 
         file_put_contents($path, $content);
+    }
+
+    private function removeConvertedFile(string $ownerId, string $conversionId, string $targetFormat): void
+    {
+        $path = sprintf(
+            '%s/var/storage/default/converted/%s/%s.%s',
+            dirname(__DIR__, 2),
+            $ownerId,
+            $conversionId,
+            $targetFormat,
+        );
+
+        if (is_file($path)) {
+            unlink($path);
+        }
     }
 }

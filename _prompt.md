@@ -325,3 +325,9 @@ commit
 ## 2026-04-07T13:54:33+02:00 [gpt-5.4 high]
 and prompt
 
+## 2026-04-07T14:39:52+02:00 [gpt-5.4 high]
+FilesystemOperator::readStream() can throw a Flysystem FilesystemException (e.g., when the converted file is missing). Right now that would bubble up as a 500 even though the API contract says missing/unavailable downloads should be 404. Consider catching Flysystem read errors and mapping them to the same 404 response (or another explicit status), and/or deferring the readStream() call into the StreamedResponse callback so the file handle is only opened when the response is actually streamed.
+
+## 2026-04-07T14:40:50+02:00 [gpt-5.4 high]
+commit please
+
