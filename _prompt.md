@@ -380,3 +380,11 @@ the cross-customer 404 case is weaker than the other negative-path tests. api/te
 ## 2026-04-07T14:57:40+02:00 [gpt-5.4 high]
 commit with _prompt.md
 
+## 2026-04-07T14:58:08+02:00 [gpt-5.4 high]
+the storage helper in the test is coupled to Flysystem’s concrete implementation instead of the interface the app uses. api/tests/Functional/
+    ConversionDownloadTest.php returns League\Flysystem\Filesystem; using FilesystemOperator would make the test less brittle if the service gets decorated or proxied
+    later.
+
+## 2026-04-07T14:58:12+02:00 [gpt-5.4 high]
+commit with _prompt.md
+
