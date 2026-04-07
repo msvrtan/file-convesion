@@ -5,20 +5,57 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
-use League\Flysystem\Filesystem;
+use App\Entity\Conversion;
+use Doctrine\ORM\EntityManagerInterface;
+use League\Flysystem\FilesystemOperator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Uid\Uuid;
 
 final class ConversionDownloadTest extends WebTestCase
 {
+    /** @var list<string> */
+    private array $createdConversionIds = [];
+
+    /** @var list<string> */
+    private array $seededStoragePaths = [];
+
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->seededStoragePaths as $path) {
+            if ($this->defaultStorage()->fileExists($path)) {
+                $this->defaultStorage()->delete($path);
+            }
+        }
+
+        if ([] !== $this->createdConversionIds) {
+            $entityManager = $this->entityManager();
+
+            foreach ($this->createdConversionIds as $conversionId) {
+                $conversion = $entityManager->find(Conversion::class, Uuid::fromString($conversionId));
+
+                if ($conversion instanceof Conversion) {
+                    $entityManager->remove($conversion);
+                }
+            }
+
+            $entityManager->flush();
+        }
+
+        $this->seededStoragePaths = [];
+        $this->createdConversionIds = [];
+
+        parent::tearDown();
     }
 
     public function testCompletedConversionCanBeDownloaded(): void
@@ -72,6 +109,42 @@ final class ConversionDownloadTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(Response::HTTP_OK);
         self::assertResponseHeaderSame('content-type', 'application/xml');
+
+        $content = $this->client->getInternalResponse()->getContent();
+        self::assertSame($fileContent, $content);
+    }
+
+    public function testCompletedJsonConversionCanBeDownloaded(): void
+    {
+        $conversionId = '019d86b0-0000-7000-8000-000000000009';
+        $ownerId = AppFixtures::ACME_ID;
+        $targetFormat = 'json';
+        $fileContent = '{"items":[{"name":"test content"}]}';
+
+        $this->createCompletedConversion(
+            ownerId: $ownerId,
+            conversionId: $conversionId,
+            sourceFormat: 'csv',
+            targetFormat: $targetFormat,
+        );
+        $this->seedConvertedFile($ownerId, $conversionId, $targetFormat, $fileContent);
+
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'GET',
+            sprintf('/conversions/%s/download', $conversionId),
+            server: [
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+        self::assertResponseHeaderSame(
+            'content-disposition',
+            sprintf('attachment; filename="%s.%s"', $conversionId, $targetFormat),
+        );
 
         $content = $this->client->getInternalResponse()->getContent();
         self::assertSame($fileContent, $content);
@@ -208,10 +281,10 @@ final class ConversionDownloadTest extends WebTestCase
         string $targetFormat,
         string $content,
     ): void {
-        $this->defaultStorage()->write(
-            sprintf('converted/%s/%s.%s', $ownerId, $conversionId, $targetFormat),
-            $content,
-        );
+        $path = sprintf('converted/%s/%s.%s', $ownerId, $conversionId, $targetFormat);
+
+        $this->defaultStorage()->write($path, $content);
+        $this->seededStoragePaths[] = $path;
     }
 
     private function removeConvertedFile(string $ownerId, string $conversionId, string $targetFormat): void
@@ -223,11 +296,41 @@ final class ConversionDownloadTest extends WebTestCase
         }
     }
 
-    private function defaultStorage(): Filesystem
+    private function createCompletedConversion(
+        string $ownerId,
+        string $conversionId,
+        string $sourceFormat,
+        string $targetFormat,
+    ): void {
+        $conversion = new Conversion(
+            Uuid::fromString($conversionId),
+            Uuid::fromString($ownerId),
+            $sourceFormat,
+            $targetFormat,
+        );
+        $conversion->markAsProcessingStarted();
+        $conversion->markAsCompleted();
+
+        $entityManager = $this->entityManager();
+        $entityManager->persist($conversion);
+        $entityManager->flush();
+
+        $this->createdConversionIds[] = $conversionId;
+    }
+
+    private function defaultStorage(): FilesystemOperator
     {
-        /** @var Filesystem $defaultStorage */
+        /** @var FilesystemOperator $defaultStorage */
         $defaultStorage = self::getContainer()->get('League\\Flysystem\\FilesystemOperator $defaultStorage');
 
         return $defaultStorage;
+    }
+
+    private function entityManager(): EntityManagerInterface
+    {
+        /** @var EntityManagerInterface $entityManager */
+        $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+
+        return $entityManager;
     }
 }

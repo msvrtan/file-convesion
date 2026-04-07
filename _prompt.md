@@ -362,3 +362,14 @@ Security test (ConversionSecurityTest.php line 73-79) — the download security 
 ## 2026-04-07T14:48:50+02:00 [gpt-5.4 high]
 commit with _prompt.md
 
+## 2026-04-07T14:53:50+02:00 [gpt-5.4 high]
+please review tests and report if we could do things better
+
+## 2026-04-07T14:55:15+02:00 [gpt-5.4 high]
+completed-download coverage only exercises the XML branch, so regressions in download content type for other completed formats would currently slip through.
+    The controller has explicit media-type branching in api/src/Controller/ConversionController.php, but the happy-path tests in api/tests/Functional/
+    ConversionDownloadTest.php and api/tests/Functional/ConversionDownloadTest.php only cover completed xml. If json or a fallback format is a valid completed output in
+    practice, add at least one completed-download case for it.
+
+commit together with _prompt.md
+
