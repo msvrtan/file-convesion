@@ -11,10 +11,11 @@ use App\Model\ConversionStatus;
 use App\Repository\ConversionRepository;
 use App\Service\AcceptConversion;
 use App\Service\RequestResolver;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -28,6 +29,7 @@ final class ConversionController extends AbstractController
         private RequestResolver $requestResolver,
         private AcceptConversion $acceptConversion,
         private ConversionRepository $conversionRepository,
+        private FilesystemOperator $defaultStorage,
     ) {
     }
 
@@ -119,8 +121,30 @@ final class ConversionController extends AbstractController
             return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
         }
 
-        // create file download response
+        $path = sprintf(
+            'converted/%s/%s.%s',
+            $entity->getOwnerId(),
+            $entity->getId(),
+            $entity->getTargetFormat(),
+        );
 
+        $stream = $this->defaultStorage->readStream($path);
+        $filename = sprintf('%s.%s', $entity->getId(), $entity->getTargetFormat());
+
+        return new StreamedResponse(
+            function () use ($stream): void {
+                fpassthru($stream);
+
+                if (\is_resource($stream)) {
+                    fclose($stream);
+                }
+            },
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/octet-stream',
+                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            ],
+        );
     }
 
     /** @param object|array<string, mixed> $data */

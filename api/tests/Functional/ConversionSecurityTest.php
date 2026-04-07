@@ -76,7 +76,7 @@ final class ConversionSecurityTest extends WebTestCase
             sprintf('Bearer %s', $token),
         );
 
-        self::assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
     }
 
     private function createJwtToken(string $username): string
