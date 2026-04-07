@@ -316,3 +316,12 @@ TestConverter should be used in test and SleepyConverter in all other environmen
 ## 2026-04-07T13:41:13+02:00 [gpt-5.4 high]
 commit together with _prompt.md
 
+## 2026-04-07T13:51:41+02:00 [gpt-5.4 high]
+based on fixtures, create tests that check their status
+
+## 2026-04-07T13:54:14+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-07T13:54:33+02:00 [gpt-5.4 high]
+and prompt
+

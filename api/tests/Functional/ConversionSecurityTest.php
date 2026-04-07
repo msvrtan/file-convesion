@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class ConversionSecurityTest extends WebTestCase
 {
+    private const ACME_CONVERSION_ID = '019d86b0-0000-7000-8000-000000000001';
+
     private KernelBrowser $client;
 
     protected function setUp(): void
@@ -57,11 +59,11 @@ final class ConversionSecurityTest extends WebTestCase
 
         $this->requestAuthenticated(
             'GET',
-            '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2',
+            sprintf('/conversions/%s', self::ACME_CONVERSION_ID),
             sprintf('Bearer %s', $token),
         );
 
-        self::assertResponseStatusCodeSame(Response::HTTP_INTERNAL_SERVER_ERROR);
+        self::assertResponseStatusCodeSame(Response::HTTP_OK);
     }
 
     public function testCustomerWithValidJwtCanDownloadConversion(): void

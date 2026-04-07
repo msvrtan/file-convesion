@@ -7,6 +7,8 @@ namespace App\Controller;
 use App\Entity\Customer;
 use App\Model\BadRequest;
 use App\Model\ConversionRequest;
+use App\Model\ConversionStatus;
+use App\Repository\ConversionRepository;
 use App\Service\AcceptConversion;
 use App\Service\RequestResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +27,7 @@ final class ConversionController extends AbstractController
         private SerializerInterface $serializer,
         private RequestResolver $requestResolver,
         private AcceptConversion $acceptConversion,
+        private ConversionRepository $conversionRepository,
     ) {
     }
 
@@ -51,12 +54,51 @@ final class ConversionController extends AbstractController
     }
 
     #[Route('/conversions/{id}', name: 'conversion_status', methods: ['GET'])]
-    public function status(): JsonResponse
-    {
-        return $this->json(
-            ['message' => 'Not implemented.'],
-            Response::HTTP_INTERNAL_SERVER_ERROR,
-        );
+    public function status(
+        Request $httpRequest,
+        Uuid $id,
+        #[CurrentUser] Customer $customer,
+    ): Response {
+        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
+
+        $entity = $this->conversionRepository->load($id, $customer->getId());
+
+        if (null === $entity) {
+            $payload = [
+                'message' => 'Conversion not found.',
+            ];
+
+            return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
+        }
+
+        $payload = match ($entity->getStatus()) {
+            ConversionStatus::Accepted => [
+                'id' => $entity->getId()->toRfc4122(),
+                'status' => $entity->getStatus()->asString(),
+                'message' => 'Your conversion is accepted. We will try to start processing it as soon as possible.',
+                'lastUpdate' => $entity->getCreatedAt()->format(\DateTimeInterface::RFC3339),
+            ],
+            ConversionStatus::InProgress => [
+                'id' => $entity->getId()->toRfc4122(),
+                'status' => $entity->getStatus()->asString(),
+                'message' => 'Your conversion is being converted right now.',
+                'lastUpdate' => $entity->getProcessingStartedAt()?->format(\DateTimeInterface::RFC3339),
+            ],
+            ConversionStatus::Failed => [
+                'id' => $entity->getId()->toRfc4122(),
+                'status' => $entity->getStatus()->asString(),
+                'message' => sprintf('Conversion failed: %s', $entity->getMessage()),
+                'lastUpdate' => $entity->getProcessingEndedAt()?->format(\DateTimeInterface::RFC3339),
+            ],
+            ConversionStatus::Completed => [
+                'id' => $entity->getId()->toRfc4122(),
+                'status' => $entity->getStatus()->asString(),
+                'message' => 'Your conversion is completed.',
+                'lastUpdate' => $entity->getProcessingEndedAt()?->format(\DateTimeInterface::RFC3339),
+            ],
+        };
+
+        return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_OK);
     }
 
     #[Route('/conversions/{id}/download', name: 'conversion_download', methods: ['GET'])]
