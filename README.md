@@ -95,8 +95,15 @@ make test
 
 ## Architecture Overview
 
+This API is split into a small HTTP layer, an application layer for request handling and path resolution, and an async worker for conversion execution.
 
-### Request flow
+- **HTTP/API layer**: Symfony controllers expose `POST /auth/token`, `POST /conversions`, `GET /conversions/{id}`, and `GET /conversions/{id}/download`. JWT auth protects the conversion endpoints, and response content negotiation is limited to JSON and XML.
+- **Persistence layer**: SQLite stores customers, conversions, and Messenger transport records. `Conversion` entities track ownership, source and target formats, lifecycle status, timestamps, and failure messages.
+- **File storage**: Flysystem writes uploaded source files under `uploads/{ownerId}/{conversionId}.{ext}` and converted output files under `converted/{ownerId}/{conversionId}.{ext}` on the local filesystem.
+- **Async processing**: Accepting a conversion dispatches an `App\Model\ConvertFile` message to Symfony Messenger. A worker consumes that message, loads the stored source file, runs the configured converter strategy, writes the converted result, and updates conversion state to `completed` or `failed`.
+- **Testing setup**: Unit tests cover services and entities, functional tests cover HTTP contracts and security boundaries, and an end-to-end test exercises the full async flow with Doctrine Messenger transport.
+
+## Request Flow
 
 1. Client authenticates via `POST /auth/token` to get a JWT
 2. Client uploads a file via `POST /conversions` with the desired output format

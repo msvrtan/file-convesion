@@ -581,3 +581,12 @@ please check if any inconsistencies are between docs and code
 the engineering doc still promises README content that does not exist. docs/engineering-requirements.md:71 says the README includes API usage examples and
     test-running instructions, but README.md:10 only covers setup, startup, OpenAPI docs, credentials, architecture, and design notes. There are no curl examples and no
     explicit section for running make test, make analyse, or make lint.
+## 2026-04-07T18:28:02+02:00 [gpt-5.4 high]
+I feel there is missing actual architectural overview in README.md, I would like to move flow out of architecture section to it's own and actually fill in overview
+
+## 2026-04-07T18:28:24+02:00 [gpt-5.4 high]
+please suggest changes
+
+## 2026-04-07T18:31:26+02:00 [gpt-5.4 high]
+commit
+
