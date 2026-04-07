@@ -32,6 +32,10 @@ symfony server:start
 php bin/console messenger:consume async -vv
 ```
 
+### OpenAPI documentation
+
+The generated OpenAPI spec is available at `GET /doc.json`, and the Swagger UI is available at `GET /doc`.
+
 ### Pre-seeded credentials
 
 Six test users are pre-seeded with the password `customer-password` — see [`AppFixtures`](api/src/DataFixtures/AppFixtures.php) for usernames and UUIDs.
