@@ -518,3 +518,6 @@ Here's my review of the test suite. Overall it's solid — good unit/functional 
 ## 2026-04-07T15:31:23+02:00 [gpt-5.4 high]
 commit
 
+## 2026-04-07T15:32:28+02:00 [gpt-5.4 high]
+do one by one, running `make fix analyze test` before committing. before starting new one, commit nicely changes (including _prompt.md)
+
