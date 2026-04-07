@@ -97,4 +97,23 @@ class Conversion
     {
         return $this->processingEndedAt;
     }
+
+    public function markAsProcessingStarted(): void
+    {
+        $this->processingStartedAt = new \DateTime();
+        $this->status = ConversionStatus::InProgress;
+    }
+
+    public function markAsFailed(string $message): void
+    {
+        $this->processingEndedAt = new \DateTime();
+        $this->status = ConversionStatus::Failed;
+        $this->message = $message;
+    }
+
+    public function markAsCompleted(): void
+    {
+        $this->processingEndedAt = new \DateTime();
+        $this->status = ConversionStatus::Completed;
+    }
 }

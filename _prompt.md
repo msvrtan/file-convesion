@@ -270,3 +270,49 @@ commit
 ## 2026-04-05T10:25:42+02:00 [gpt-5.4 high]
 fix tests please
 
+## 2026-04-05T10:19:17+02:00 [gpt-5.4 high]
+test converter should read target format and load sample from tests/fixtures and return it
+
+## 2026-04-05T10:21:10+02:00 [gpt-5.4 high]
+do same thing in sleepy converter but add 120 second sleep
+
+## 2026-04-05T10:21:30+02:00 [gpt-5.4 high]
+create unit tests for testconverter
+
+## 2026-04-05T10:23:59+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-05T10:34:54+02:00 [gpt-5.4 high]
+please create handler for messenger that will accept ConvertFile message, get content via flysystem, send it to converter and store it in converted slot
+
+## 2026-04-05T10:45:15+02:00 [gpt-5.4 high]
+refactor handler to separate intention from implementation
+
+## 2026-04-07T12:57:16+02:00 [gpt-5.4 high]
+please add new fixture that will handle conversion entity: 
+
+- try to use different owners as much as possible
+- try to cover all input output pairs
+- cover all conversion statuses
+
+## 2026-04-07T12:58:52+02:00 [gpt-5.4 high]
+messages are used only when there was an error in conversion
+
+## 2026-04-07T12:59:20+02:00 [gpt-5.4 high]
+commit
+
+## 2026-04-07T13:34:18+02:00 [gpt-5.4 high]
+are there any cases we missed to test in ConvertFileHandler ?
+
+## 2026-04-07T13:35:03+02:00 [gpt-5.4 high]
+please add those tests, thank you
+
+## 2026-04-07T13:37:32+02:00 [gpt-5.4 high]
+commit please
+
+## 2026-04-07T13:38:32+02:00 [gpt-5.4 high]
+TestConverter should be used in test and SleepyConverter in all other environments
+
+## 2026-04-07T13:41:13+02:00 [gpt-5.4 high]
+commit together with _prompt.md
+
