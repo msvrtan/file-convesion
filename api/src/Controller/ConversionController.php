@@ -141,15 +141,9 @@ final class ConversionController extends AbstractController
             return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
         }
 
-        if (!\is_resource($stream)) {
-            $payload = [
-                'message' => 'Conversion not found.',
-            ];
-
-            return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
-        }
-
-        $filename = sprintf('%s.%s', $entity->getId(), $entity->getTargetFormat());
+        /** @var 'json'|'xml' $targetFormat */
+        $targetFormat = $entity->getTargetFormat();
+        $filename = sprintf('%s.%s', $entity->getId(), $targetFormat);
 
         return new StreamedResponse(
             function () use ($stream): void {
@@ -158,7 +152,7 @@ final class ConversionController extends AbstractController
             },
             Response::HTTP_OK,
             [
-                'Content-Type' => $this->downloadMediaType($entity->getTargetFormat()),
+                'Content-Type' => $this->downloadMediaType($targetFormat),
                 'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
             ],
         );
@@ -173,12 +167,12 @@ final class ConversionController extends AbstractController
         return new Response($content, $statusCode, ['Content-Type' => $mediaType]);
     }
 
+    /** @param 'json'|'xml' $targetFormat */
     private function downloadMediaType(string $targetFormat): string
     {
         return match ($targetFormat) {
             'json' => 'application/json',
             'xml' => 'application/xml',
-            default => 'application/octet-stream',
         };
     }
 

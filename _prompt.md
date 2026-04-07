@@ -521,3 +521,15 @@ commit
 ## 2026-04-07T15:32:28+02:00 [gpt-5.4 high]
 do one by one, running `make fix analyze test` before committing. before starting new one, commit nicely changes (including _prompt.md)
 
+## 2026-04-07T15:33:47+02:00 [gpt-5.4 high]
+13. resolveResponseMediaType is duplicated in production code
+
+  Identical logic exists in both ConversionController:174-187 and BadRequestSubscriber:53-66. The tests exercise both copies indirectly, but if one drifts the tests won't
+   catch the inconsistency. Extract to a shared service or utility.
+
+  14. Dead code in controller: is_resource check
+
+  ConversionController:142-148 — readStream() either returns a resource or throws FilesystemException. The !is_resource($stream) branch is unreachable. Same for the
+  default => 'application/octet-stream' in downloadMediaType() — targetFormat is validated to only be json or xml. Neither path can be triggered, so they can't be tested.
+   Consider removing them.
+
