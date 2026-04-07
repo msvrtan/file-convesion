@@ -40,6 +40,59 @@ The generated OpenAPI spec is available at `GET /doc.json`, and the Swagger UI i
 
 Six test users are pre-seeded with the password `customer-password` — see [`AppFixtures`](api/src/DataFixtures/AppFixtures.php) for usernames and UUIDs.
 
+## API Usage
+
+Run these examples from the `api/` directory while the Symfony server and Messenger worker are running.
+
+### Get a JWT
+
+```bash
+curl -X POST http://127.0.0.1:8000/auth/token \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"acme-corp","password":"customer-password"}'
+```
+
+### Submit a conversion
+
+Replace `<TOKEN>` with the JWT from the previous response.
+
+```bash
+curl -X POST http://127.0.0.1:8000/conversions \
+  -H 'Accept: application/json' \
+  -H "Authorization: Bearer <TOKEN>" \
+  -F targetFormat=xml \
+  -F file=@tests/Fixtures/sample.csv
+```
+
+### Check status
+
+Replace `<CONVERSION_ID>` with the `id` returned by `POST /conversions`.
+
+```bash
+curl http://127.0.0.1:8000/conversions/<CONVERSION_ID> \
+  -H 'Accept: application/json' \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+### Download the converted file
+
+```bash
+curl http://127.0.0.1:8000/conversions/<CONVERSION_ID>/download \
+  -H "Authorization: Bearer <TOKEN>" \
+  -o converted.xml
+```
+
+## Quality Checks
+
+Run these commands from the `api/` directory:
+
+```bash
+make lint
+make fix
+make analyse
+make test
+```
+
 ## Architecture Overview
 
 

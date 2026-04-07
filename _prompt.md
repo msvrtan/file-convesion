@@ -574,3 +574,10 @@ End-to-end tests claimed but don't exist
 
 ## 2026-04-07T16:45:18+02:00 [gpt-5.4 high]
 no, i would like you to create e2e test
+## 2026-04-07T18:23:54+02:00 [gpt-5.4 high]
+please check if any inconsistencies are between docs and code
+
+## 2026-04-07T18:25:29+02:00 [gpt-5.4 high]
+the engineering doc still promises README content that does not exist. docs/engineering-requirements.md:71 says the README includes API usage examples and
+    test-running instructions, but README.md:10 only covers setup, startup, OpenAPI docs, credentials, architecture, and design notes. There are no curl examples and no
+    explicit section for running make test, make analyse, or make lint.
