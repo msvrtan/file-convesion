@@ -1,0 +1,34 @@
+headers {
+  Accept: application/json
+}
+
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # File Conversion API
+
+  ## Quick Start
+
+  1. Run `make reviewer` in the `api/` directory
+  2. Start the server: `symfony server:start`
+  3. Start the worker: `php bin/console messenger:consume async -vv`
+  4. Select the "local" environment
+  5. Run the "Login" request — the token is saved automatically
+  6. Try submitting a conversion, checking status, and downloading
+
+  ## Pre-seeded Users
+
+  All users share the password `customer-password`:
+  - acme-corp
+  - globex-corp
+  - initech
+  - umbrella-corp
+  - wayne-enterprises
+  - stark-industries
+}

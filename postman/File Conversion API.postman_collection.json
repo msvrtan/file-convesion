@@ -1,0 +1,360 @@
+{
+  "info": {
+    "name": "File Conversion API",
+    "description": "API collection for the file conversion service.\n\n## Quick Start\n\n1. Run `make reviewer` in the `api/` directory\n2. Start the server: `symfony server:start`\n3. Start the worker: `php bin/console messenger:consume async -vv`\n4. Run the \"Login\" request — the token is saved automatically\n5. Try submitting a conversion, checking status, and downloading\n\n## Pre-seeded Users\n\nAll users share the password `customer-password`:\n- acme-corp\n- globex-corp\n- initech\n- umbrella-corp\n- wayne-enterprises\n- stark-industries",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "acme-corp",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "customer-password",
+      "type": "string"
+    },
+    {
+      "key": "conversionId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    pm.test('Token saved', function () {",
+                  "        pm.expect(json.token).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "token"]
+            },
+            "description": "Authenticate and receive a JWT token. The token is automatically saved to the `token` collection variable for use by other requests."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Conversions",
+      "item": [
+        {
+          "name": "Submit conversion (JSON → XML)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('conversionId', json.id);",
+                  "    pm.test('Conversion ID saved', function () {",
+                  "        pm.expect(json.id).to.be.a('string');",
+                  "        pm.expect(json.status).to.eql('accepted');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "sample/sample.json",
+                  "description": "Source file to convert"
+                },
+                {
+                  "key": "targetFormat",
+                  "value": "xml",
+                  "type": "text",
+                  "description": "Target format: json or xml"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/conversions",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions"]
+            },
+            "description": "Upload a file for conversion. The conversion ID is automatically saved for subsequent requests.\n\nSupported input formats: CSV, JSON, XLSX, ODS\nSupported output formats: JSON, XML"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit conversion (CSV → JSON)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('conversionId', json.id);",
+                  "    pm.test('Conversion ID saved', function () {",
+                  "        pm.expect(json.id).to.be.a('string');",
+                  "        pm.expect(json.status).to.eql('accepted');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "sample/sample.csv",
+                  "description": "Source file to convert"
+                },
+                {
+                  "key": "targetFormat",
+                  "value": "json",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/conversions",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions"]
+            },
+            "description": "Upload a CSV file for conversion to JSON."
+          },
+          "response": []
+        },
+        {
+          "name": "Check conversion status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversions/{{conversionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions", "{{conversionId}}"]
+            },
+            "description": "Poll this endpoint until status is `completed` or `failed`.\n\nPossible statuses: accepted, inprogress, completed, failed"
+          },
+          "response": []
+        },
+        {
+          "name": "Check status (XML response)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversions/{{conversionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions", "{{conversionId}}"]
+            },
+            "description": "Same as status check but requesting XML response format."
+          },
+          "response": []
+        },
+        {
+          "name": "Download converted file",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversions/{{conversionId}}/download",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions", "{{conversionId}}", "download"]
+            },
+            "description": "Download the converted file. Only available when status is `completed`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pre-seeded fixtures",
+      "description": "Requests using pre-seeded conversion IDs from fixtures. Useful for quickly checking different statuses without running the async worker.",
+      "item": [
+        {
+          "name": "Status: accepted (ACME, csv→json)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversions/019d86b0-0000-7000-8000-000000000001",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions", "019d86b0-0000-7000-8000-000000000001"]
+            },
+            "description": "Pre-seeded conversion owned by acme-corp. Login as acme-corp first."
+          },
+          "response": []
+        },
+        {
+          "name": "Status: failed (Initech, json→json)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversions/019d86b0-0000-7000-8000-000000000003",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions", "019d86b0-0000-7000-8000-000000000003"]
+            },
+            "description": "Pre-seeded failed conversion owned by initech. Login as initech first."
+          },
+          "response": []
+        },
+        {
+          "name": "Status: completed (Umbrella, json→xml)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversions/019d86b0-0000-7000-8000-000000000004",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions", "019d86b0-0000-7000-8000-000000000004"]
+            },
+            "description": "Pre-seeded completed conversion owned by umbrella-corp. Login as umbrella-corp first."
+          },
+          "response": []
+        },
+        {
+          "name": "Download completed (Umbrella, json→xml)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversions/019d86b0-0000-7000-8000-000000000004/download",
+              "host": ["{{baseUrl}}"],
+              "path": ["conversions", "019d86b0-0000-7000-8000-000000000004", "download"]
+            },
+            "description": "Download the completed conversion. Login as umbrella-corp first."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

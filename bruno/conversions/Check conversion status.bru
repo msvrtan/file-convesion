@@ -1,0 +1,21 @@
+meta {
+  name: Check conversion status
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/conversions/{{conversionId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Poll this endpoint until status is `completed` or `failed`.
+
+  Possible statuses: accepted, inprogress, completed, failed
+}

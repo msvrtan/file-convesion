@@ -1,0 +1,11 @@
+country,iso2,iso3,capital,continent,population_millions,area_km2,currency,official_language
+Croatia,HR,HRV,Zagreb,Europe,3.9,56594,EUR,Croatian
+Japan,JP,JPN,Tokyo,Asia,123.3,377975,JPY,Japanese
+Brazil,BR,BRA,Brasilia,South America,203.1,8515767,BRL,Portuguese
+Canada,CA,CAN,Ottawa,North America,41.0,9984670,CAD,English and French
+Kenya,KE,KEN,Nairobi,Africa,55.3,580367,KES,Swahili and English
+Australia,AU,AUS,Canberra,Oceania,27.1,7692024,AUD,English
+India,IN,IND,New Delhi,Asia,1430.0,3287263,INR,Hindi and English
+Germany,DE,DEU,Berlin,Europe,84.4,357588,EUR,German
+Mexico,MX,MEX,Mexico City,North America,129.5,1964375,MXN,Spanish
+South Africa,ZA,ZAF,Pretoria,Africa,62.0,1221037,ZAR,"Xitsonga, Zulu, and 9 others"

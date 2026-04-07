@@ -1,0 +1,20 @@
+meta {
+  name: Status: completed (Umbrella, json→xml)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/conversions/019d86b0-0000-7000-8000-000000000004
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Pre-seeded completed conversion owned by umbrella-corp.
+  Login as umbrella-corp first.
+}

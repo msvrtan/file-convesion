@@ -1,0 +1,30 @@
+meta {
+  name: Submit conversion (CSV → JSON)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/conversions
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:multipart-form {
+  file: @file(../sample/sample.csv)
+  targetFormat: json
+}
+
+script:post-response {
+  if (res.status === 202) {
+    bru.setEnvVar("conversionId", res.body.id);
+  }
+}
+
+docs {
+  Upload a CSV file for conversion to JSON.
+}

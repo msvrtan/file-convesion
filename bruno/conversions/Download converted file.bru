@@ -1,0 +1,19 @@
+meta {
+  name: Download converted file
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/conversions/{{conversionId}}/download
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Download the converted file. Only available when status is `completed`.
+}
