@@ -11,10 +11,12 @@ use App\Model\ConversionStatus;
 use App\Repository\ConversionRepository;
 use App\Service\AcceptConversion;
 use App\Service\RequestResolver;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -28,6 +30,7 @@ final class ConversionController extends AbstractController
         private RequestResolver $requestResolver,
         private AcceptConversion $acceptConversion,
         private ConversionRepository $conversionRepository,
+        private FilesystemOperator $defaultStorage,
     ) {
     }
 
@@ -102,11 +105,60 @@ final class ConversionController extends AbstractController
     }
 
     #[Route('/conversions/{id}/download', name: 'conversion_download', methods: ['GET'])]
-    public function download(): JsonResponse
-    {
-        return $this->json(
-            ['message' => 'Not implemented.'],
-            Response::HTTP_INTERNAL_SERVER_ERROR,
+    public function download(
+        Request $httpRequest,
+        Uuid $id,
+        #[CurrentUser] Customer $customer,
+    ): Response {
+        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
+
+        $entity = $this->conversionRepository->load($id, $customer->getId());
+
+        if (null === $entity || ConversionStatus::Completed !== $entity->getStatus()) {
+            $payload = [
+                'message' => 'Conversion not found.',
+            ];
+
+            return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
+        }
+
+        $path = sprintf(
+            'converted/%s/%s.%s',
+            $entity->getOwnerId(),
+            $entity->getId(),
+            $entity->getTargetFormat(),
+        );
+
+        try {
+            $stream = $this->defaultStorage->readStream($path);
+        } catch (FilesystemException) {
+            $payload = [
+                'message' => 'Conversion not found.',
+            ];
+
+            return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
+        }
+
+        if (!\is_resource($stream)) {
+            $payload = [
+                'message' => 'Conversion not found.',
+            ];
+
+            return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
+        }
+
+        $filename = sprintf('%s.%s', $entity->getId(), $entity->getTargetFormat());
+
+        return new StreamedResponse(
+            function () use ($stream): void {
+                fpassthru($stream);
+                fclose($stream);
+            },
+            Response::HTTP_OK,
+            [
+                'Content-Type' => $this->downloadMediaType($entity->getTargetFormat()),
+                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            ],
         );
     }
 
@@ -132,6 +184,15 @@ final class ConversionController extends AbstractController
         }
 
         return 'application/json';
+    }
+
+    private function downloadMediaType(string $targetFormat): string
+    {
+        return match ($targetFormat) {
+            'json' => 'application/json',
+            'xml' => 'application/xml',
+            default => 'application/octet-stream',
+        };
     }
 
     /**
