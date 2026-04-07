@@ -102,12 +102,25 @@ final class ConversionController extends AbstractController
     }
 
     #[Route('/conversions/{id}/download', name: 'conversion_download', methods: ['GET'])]
-    public function download(): JsonResponse
-    {
-        return $this->json(
-            ['message' => 'Not implemented.'],
-            Response::HTTP_INTERNAL_SERVER_ERROR,
-        );
+    public function download(
+        Request $httpRequest,
+        Uuid $id,
+        #[CurrentUser] Customer $customer,
+    ): Response {
+        $responseMediaType = $this->resolveResponseMediaType($httpRequest);
+
+        $entity = $this->conversionRepository->load($id, $customer->getId());
+
+        if (null === $entity || ConversionStatus::Completed !== $entity->getStatus()) {
+            $payload = [
+                'message' => 'Conversion not found.',
+            ];
+
+            return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
+        }
+
+        // create file download response
+
     }
 
     /** @param object|array<string, mixed> $data */
