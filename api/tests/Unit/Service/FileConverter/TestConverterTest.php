@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service\FileConverter;
 
 use App\Service\FileConverter\TestConverter;
+use App\Tests\UsesFixtureFiles;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class TestConverterTest extends TestCase
 {
+    use UsesFixtureFiles;
+
     private TestConverter $converter;
 
     protected function setUp(): void
@@ -42,8 +45,4 @@ final class TestConverterTest extends TestCase
         ];
     }
 
-    private static function fixturePath(string $filename): string
-    {
-        return dirname(__DIR__, 3).'/Fixtures/'.$filename;
-    }
 }

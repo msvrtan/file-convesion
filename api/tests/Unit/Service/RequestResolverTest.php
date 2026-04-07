@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service;
 
 use App\Model\BadRequest;
 use App\Service\RequestResolver;
+use App\Tests\UsesFixtureFiles;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,6 +16,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class RequestResolverTest extends TestCase
 {
+    use UsesFixtureFiles;
+
     private RequestResolver $requestResolver;
 
     protected function setUp(): void
@@ -105,18 +108,4 @@ final class RequestResolverTest extends TestCase
             ->getValidator();
     }
 
-    private static function createFixtureUpload(string $fixtureName = 'sample.json', ?string $clientName = null): UploadedFile
-    {
-        return new UploadedFile(
-            self::fixturePath($fixtureName),
-            $clientName ?? $fixtureName,
-            'application/json',
-            test: true,
-        );
-    }
-
-    private static function fixturePath(string $filename): string
-    {
-        return dirname(__DIR__, 2).'/Fixtures/'.$filename;
-    }
 }

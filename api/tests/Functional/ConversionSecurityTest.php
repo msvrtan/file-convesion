@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
+use App\Tests\UsesFixtureFiles;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ConversionSecurityTest extends WebTestCase
 {
     use AuthenticatesCustomer;
+    use UsesFixtureFiles;
 
     private const ACME_CONVERSION_ID = '019d86b0-0000-7000-8000-000000000001';
 
@@ -119,7 +120,7 @@ final class ConversionSecurityTest extends WebTestCase
             'POST',
             '/conversions',
             ['targetFormat' => 'json'],
-            ['file' => self::createFixtureUpload()],
+            ['file' => self::createFixtureUpload('sample.csv', 'sample.csv', 'text/csv')],
             server: $server,
         );
     }
@@ -139,18 +140,4 @@ final class ConversionSecurityTest extends WebTestCase
         );
     }
 
-    private static function createFixtureUpload(): UploadedFile
-    {
-        return new UploadedFile(
-            self::fixturePath('sample.csv'),
-            'sample.csv',
-            'text/csv',
-            test: true,
-        );
-    }
-
-    private static function fixturePath(string $filename): string
-    {
-        return dirname(__DIR__).'/Fixtures/'.$filename;
-    }
 }

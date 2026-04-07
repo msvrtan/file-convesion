@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
+use App\Tests\UsesFixtureFiles;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 use Symfony\Component\Uid\Uuid;
@@ -19,6 +19,7 @@ use Symfony\Component\Uid\Uuid;
 final class ConversionAcceptTest extends WebTestCase
 {
     use AuthenticatesCustomer;
+    use UsesFixtureFiles;
 
     private KernelBrowser $client;
 
@@ -363,24 +364,6 @@ final class ConversionAcceptTest extends WebTestCase
         $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         self::assertSame('Only a single file upload is supported.', $payload['message'] ?? null);
-    }
-
-    private static function createFixtureUpload(
-        string $fixtureName = 'sample.json',
-        ?string $clientName = null,
-        string $mimeType = 'application/json',
-    ): UploadedFile {
-        return new UploadedFile(
-            self::fixturePath($fixtureName),
-            $clientName ?? $fixtureName,
-            $mimeType,
-            test: true,
-        );
-    }
-
-    private static function fixturePath(string $filename): string
-    {
-        return dirname(__DIR__).'/Fixtures/'.$filename;
     }
 
     private function asyncTransport(): InMemoryTransport

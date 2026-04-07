@@ -9,6 +9,7 @@ use App\Model\ConversionRequest;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
 use App\Service\AcceptConversion;
+use App\Tests\UsesFixtureFiles;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\ORM\OptimisticLockException;
 use League\Flysystem\FilesystemException;
@@ -23,6 +24,8 @@ use Symfony\Component\Uid\UuidV7;
 
 final class AcceptConversionTest extends TestCase
 {
+    use UsesFixtureFiles;
+
     private FilesystemOperator&MockObject $defaultStorage;
     private ConversionRepository&MockObject $conversionRepository;
     private MessageBusInterface&MockObject $messageBus;
@@ -227,8 +230,4 @@ final class AcceptConversionTest extends TestCase
         );
     }
 
-    private static function fixturePath(string $filename): string
-    {
-        return dirname(__DIR__, 2).'/Fixtures/'.$filename;
-    }
 }
