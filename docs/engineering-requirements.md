@@ -25,7 +25,7 @@ Based on the [business requirements](business-requirements.md), this document de
 - Accepted output formats: **JSON**, **XML**
 
 ### Job Lifecycle
-- States: `pending` → `processing` → (`completed` or `failed`)
+- States: `accepted` → `inprogress` → (`completed` or `failed`)
 - Conversion is a dummy service (sleep-based) behind a strategy interface
 - Job metadata stored in database
 
