@@ -29,6 +29,13 @@ final class ConversionSecurityTest extends WebTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
 
+    public function testMissingJwtCannotAccessCreateConversion(): void
+    {
+        $this->requestCreateConversion();
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
     public function testInvalidJwtCannotAccessConversionStatus(): void
     {
         $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2', 'Bearer wRoNgTokEn');
@@ -36,9 +43,23 @@ final class ConversionSecurityTest extends WebTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
 
+    public function testMissingJwtCannotAccessConversionStatus(): void
+    {
+        $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
     public function testInvalidJwtCannotAccessConversionDownload(): void
     {
         $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2/download', 'Bearer wRoNgTokEn');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
+    }
+
+    public function testMissingJwtCannotAccessConversionDownload(): void
+    {
+        $this->requestAuthenticated('GET', '/conversions/019d58eb-2dc4-7b0f-8fec-6bb9804399f2/download');
 
         self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
     }
@@ -106,27 +127,35 @@ final class ConversionSecurityTest extends WebTestCase
         return $payload['token'];
     }
 
-    private function requestCreateConversion(string $authorization): void
+    private function requestCreateConversion(?string $authorization = null): void
     {
+        $server = [];
+
+        if (null !== $authorization) {
+            $server['HTTP_AUTHORIZATION'] = $authorization;
+        }
+
         $this->client->request(
             'POST',
             '/conversions',
             ['targetFormat' => 'json'],
             ['file' => self::createFixtureUpload()],
-            server: [
-                'HTTP_AUTHORIZATION' => $authorization,
-            ],
+            server: $server,
         );
     }
 
-    private function requestAuthenticated(string $method, string $uri, string $authorization): void
+    private function requestAuthenticated(string $method, string $uri, ?string $authorization = null): void
     {
+        $server = [];
+
+        if (null !== $authorization) {
+            $server['HTTP_AUTHORIZATION'] = $authorization;
+        }
+
         $this->client->request(
             $method,
             $uri,
-            server: [
-                'HTTP_AUTHORIZATION' => $authorization,
-            ],
+            server: $server,
         );
     }
 
