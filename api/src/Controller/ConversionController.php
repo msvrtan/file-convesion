@@ -156,7 +156,7 @@ final class ConversionController extends AbstractController
             },
             Response::HTTP_OK,
             [
-                'Content-Type' => 'application/octet-stream',
+                'Content-Type' => $this->downloadMediaType($entity->getTargetFormat()),
                 'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
             ],
         );
@@ -184,6 +184,15 @@ final class ConversionController extends AbstractController
         }
 
         return 'application/json';
+    }
+
+    private function downloadMediaType(string $targetFormat): string
+    {
+        return match ($targetFormat) {
+            'json' => 'application/json',
+            'xml' => 'application/xml',
+            default => 'application/octet-stream',
+        };
     }
 
     /**

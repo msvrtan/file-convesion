@@ -41,7 +41,7 @@ final class ConversionDownloadTest extends WebTestCase
         );
 
         self::assertResponseStatusCodeSame(Response::HTTP_OK);
-        self::assertResponseHeaderSame('content-type', 'application/octet-stream');
+        self::assertResponseHeaderSame('content-type', 'application/xml');
         self::assertResponseHeaderSame(
             'content-disposition',
             sprintf('attachment; filename="%s.%s"', $conversionId, $targetFormat),
@@ -71,7 +71,7 @@ final class ConversionDownloadTest extends WebTestCase
         );
 
         self::assertResponseStatusCodeSame(Response::HTTP_OK);
-        self::assertResponseHeaderSame('content-type', 'application/octet-stream');
+        self::assertResponseHeaderSame('content-type', 'application/xml');
 
         $content = $this->client->getInternalResponse()->getContent();
         self::assertSame($fileContent, $content);
