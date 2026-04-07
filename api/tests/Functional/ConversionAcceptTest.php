@@ -7,12 +7,11 @@ namespace App\Tests\Functional;
 use App\DataFixtures\AppFixtures;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
-use Doctrine\DBAL\Connection;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\Transport\Serialization\PhpSerializer;
+use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 use Symfony\Component\Uid\Uuid;
 
 final class ConversionAcceptTest extends WebTestCase
@@ -25,6 +24,7 @@ final class ConversionAcceptTest extends WebTestCase
     {
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+        $this->asyncTransport()->reset();
     }
 
     protected function browser(): KernelBrowser
@@ -80,33 +80,10 @@ final class ConversionAcceptTest extends WebTestCase
             file_get_contents($storedFilePath),
         );
 
-        /** @var Connection $connection */
-        $connection = self::getContainer()->get(Connection::class);
-        $queuedMessage = $connection->fetchAssociative(
-            'SELECT body, headers FROM messenger_messages WHERE queue_name = :queueName ORDER BY id DESC LIMIT 1',
-            ['queueName' => 'async'],
-        );
+        $sentEnvelopes = $this->asyncTransport()->getSent();
+        self::assertCount(1, $sentEnvelopes);
 
-        self::assertIsArray($queuedMessage);
-        self::assertArrayHasKey('body', $queuedMessage);
-        self::assertArrayHasKey('headers', $queuedMessage);
-        self::assertIsString($queuedMessage['body']);
-        self::assertIsString($queuedMessage['headers']);
-
-        $headers = json_decode($queuedMessage['headers'], true, 512, JSON_THROW_ON_ERROR);
-        self::assertIsArray($headers);
-
-        foreach ($headers as $key => $value) {
-            self::assertIsString($key);
-            self::assertIsString($value);
-        }
-
-        $serializer = new PhpSerializer();
-        /** @var array<string, string> $headers */
-        $envelope = $serializer->decode([
-            'body' => $queuedMessage['body'],
-            'headers' => $headers,
-        ]);
+        $envelope = $sentEnvelopes[0];
 
         $message = $envelope->getMessage();
 
@@ -338,6 +315,14 @@ final class ConversionAcceptTest extends WebTestCase
     private static function storagePath(string $filename): string
     {
         return dirname(__DIR__, 2).'/var/storage/default/'.$filename;
+    }
+
+    private function asyncTransport(): InMemoryTransport
+    {
+        /** @var InMemoryTransport $transport */
+        $transport = self::getContainer()->get('messenger.transport.async');
+
+        return $transport;
     }
 
     private static function normalizeXmlText(string $value): string
