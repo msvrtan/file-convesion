@@ -10,6 +10,7 @@ use App\Model\ConversionStatus;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
 use App\Service\FileConverter\FileConverter;
+use App\Service\PathResolver;
 use League\Flysystem\FilesystemOperator;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +21,7 @@ final class ConvertFileHandlerTest extends TestCase
     private FilesystemOperator&MockObject $defaultStorage;
     private ConversionRepository&MockObject $conversionRepository;
     private FileConverter&MockObject $fileConverter;
+    private PathResolver $pathResolver;
     private ConvertFileHandler $handler;
 
     protected function setUp(): void
@@ -30,11 +32,13 @@ final class ConvertFileHandlerTest extends TestCase
             ->onlyMethods(['load', 'save'])
             ->getMock();
         $this->fileConverter = $this->createMock(FileConverter::class);
+        $this->pathResolver = new PathResolver();
 
         $this->handler = new ConvertFileHandler(
             $this->defaultStorage,
             $this->conversionRepository,
             $this->fileConverter,
+            $this->pathResolver,
         );
     }
 
@@ -73,7 +77,7 @@ final class ConvertFileHandlerTest extends TestCase
             });
         $this->defaultStorage->expects(self::once())
             ->method('read')
-            ->with(sprintf('uploads/%s/%s.json', $message->getOwnerId(), $message->getId()))
+            ->with($this->pathResolver->uploadPath($message->getOwnerId(), $message->getId(), 'json'))
             ->willReturn('{"country":"Croatia"}');
         $this->fileConverter->expects(self::once())
             ->method('convert')
@@ -82,7 +86,7 @@ final class ConvertFileHandlerTest extends TestCase
         $this->defaultStorage->expects(self::once())
             ->method('write')
             ->with(
-                sprintf('converted/%s/%s.xml', $message->getOwnerId(), $message->getId()),
+                $this->pathResolver->convertedPath($message->getOwnerId(), $message->getId(), 'xml'),
                 '<root><country>Croatia</country></root>',
             );
 
@@ -171,7 +175,7 @@ final class ConvertFileHandlerTest extends TestCase
             });
         $this->defaultStorage->expects(self::once())
             ->method('read')
-            ->with(sprintf('uploads/%s/%s.json', $message->getOwnerId(), $message->getId()))
+            ->with($this->pathResolver->uploadPath($message->getOwnerId(), $message->getId(), 'json'))
             ->willThrowException(new \RuntimeException('Unable to read source file.'));
         $this->defaultStorage->expects(self::never())->method('write');
         $this->fileConverter->expects(self::never())->method('convert');
@@ -250,7 +254,7 @@ final class ConvertFileHandlerTest extends TestCase
         $this->defaultStorage->expects(self::once())
             ->method('write')
             ->with(
-                sprintf('converted/%s/%s.xml', $message->getOwnerId(), $message->getId()),
+                $this->pathResolver->convertedPath($message->getOwnerId(), $message->getId(), 'xml'),
                 '<root><country>Croatia</country></root>',
             )
             ->willThrowException(new \RuntimeException('Unable to store converted file.'));

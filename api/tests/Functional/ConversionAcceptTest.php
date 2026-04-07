@@ -74,7 +74,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertSame($payload['id'], (string) $conversion->getId());
         self::assertSame(AppFixtures::ACME_ID, (string) $conversion->getOwnerId());
 
-        $storedFilePath = sprintf('uploads/%s/%s.json', AppFixtures::ACME_ID, $payload['id']);
+        $storedFilePath = $this->pathResolver()->uploadPath(AppFixtures::ACME_ID, $payload['id'], 'json');
         self::assertTrue($this->defaultStorage()->fileExists($storedFilePath));
         self::assertSame(
             file_get_contents(self::fixturePath('sample.json')),
@@ -129,7 +129,7 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertNotNull($conversion);
         self::assertSame('csv', $conversion->getSourceFormat());
 
-        $storedFilePath = sprintf('uploads/%s/%s.csv', AppFixtures::ACME_ID, $payload['id']);
+        $storedFilePath = $this->pathResolver()->uploadPath(AppFixtures::ACME_ID, $payload['id'], 'csv');
         self::assertTrue($this->defaultStorage()->fileExists($storedFilePath));
         self::assertSame(
             file_get_contents(self::fixturePath('sample.csv')),
@@ -380,5 +380,10 @@ final class ConversionAcceptTest extends WebTestCase
         $defaultStorage = self::getContainer()->get('League\\Flysystem\\FilesystemOperator $defaultStorage');
 
         return $defaultStorage;
+    }
+
+    private function pathResolver(): \App\Service\PathResolver
+    {
+        return new \App\Service\PathResolver();
     }
 }

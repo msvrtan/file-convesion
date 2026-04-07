@@ -10,6 +10,7 @@ use App\Model\ConversionRequest;
 use App\Model\ConversionStatus;
 use App\Repository\ConversionRepository;
 use App\Service\AcceptConversion;
+use App\Service\PathResolver;
 use App\Service\RequestResolver;
 use App\Service\ResponseMediaTypeResolver;
 use League\Flysystem\FilesystemException;
@@ -32,6 +33,7 @@ final class ConversionController extends AbstractController
         private AcceptConversion $acceptConversion,
         private ConversionRepository $conversionRepository,
         private FilesystemOperator $defaultStorage,
+        private PathResolver $pathResolver,
         private ResponseMediaTypeResolver $responseMediaTypeResolver,
     ) {
     }
@@ -124,12 +126,7 @@ final class ConversionController extends AbstractController
             return $this->serializeResponse($payload, $responseMediaType, Response::HTTP_NOT_FOUND);
         }
 
-        $path = sprintf(
-            'converted/%s/%s.%s',
-            $entity->getOwnerId(),
-            $entity->getId(),
-            $entity->getTargetFormat(),
-        );
+        $path = $this->pathResolver->convertedPathForConversion($entity);
 
         try {
             $stream = $this->defaultStorage->readStream($path);

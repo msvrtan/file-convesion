@@ -286,7 +286,7 @@ final class ConversionDownloadTest extends WebTestCase
         string $targetFormat,
         string $content,
     ): void {
-        $path = sprintf('converted/%s/%s.%s', $ownerId, $conversionId, $targetFormat);
+        $path = $this->pathResolver()->convertedPath($ownerId, $conversionId, $targetFormat);
 
         $this->defaultStorage()->write($path, $content);
         $this->seededStoragePaths[] = $path;
@@ -294,7 +294,7 @@ final class ConversionDownloadTest extends WebTestCase
 
     private function removeConvertedFile(string $ownerId, string $conversionId, string $targetFormat): void
     {
-        $path = sprintf('converted/%s/%s.%s', $ownerId, $conversionId, $targetFormat);
+        $path = $this->pathResolver()->convertedPath($ownerId, $conversionId, $targetFormat);
 
         if ($this->defaultStorage()->fileExists($path)) {
             $this->defaultStorage()->delete($path);
@@ -337,5 +337,10 @@ final class ConversionDownloadTest extends WebTestCase
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
 
         return $entityManager;
+    }
+
+    private function pathResolver(): \App\Service\PathResolver
+    {
+        return new \App\Service\PathResolver();
     }
 }

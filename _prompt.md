@@ -533,3 +533,9 @@ do one by one, running `make fix analyze test` before committing. before startin
   default => 'application/octet-stream' in downloadMediaType() — targetFormat is validated to only be json or xml. Neither path can be triggered, so they can't be tested.
    Consider removing them.
 
+## 2026-04-07T15:37:36+02:00 [gpt-5.4 high]
+lets create PathResolver class that can help us unify all the logic where uploaded and converted paths are without duplication
+
+## 2026-04-07T15:54:18+02:00 [gpt-5.4 high]
+lets create PathResolver class that can help us unify all the logic where uploaded and converted paths are without duplication
+
