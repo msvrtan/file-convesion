@@ -92,6 +92,50 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertSame(AppFixtures::ACME_ID, (string) $message->getOwnerId());
     }
 
+    public function testCustomerCanSubmitCsvConversionRequest(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'POST',
+            '/conversions',
+            ['targetFormat' => 'xml'],
+            ['file' => self::createFixtureUpload('sample.csv', 'sample.csv', 'text/csv')],
+            server: [
+                'HTTP_ACCEPT' => 'application/json',
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_ACCEPTED);
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{id?: mixed, status?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertIsString($payload['id'] ?? null);
+        self::assertSame('accepted', $payload['status'] ?? null);
+
+        /** @var ConversionRepository $conversionRepository */
+        $conversionRepository = self::getContainer()->get(ConversionRepository::class);
+        $conversion = $conversionRepository->load(
+            Uuid::fromString($payload['id']),
+            Uuid::fromString(AppFixtures::ACME_ID),
+        );
+
+        self::assertNotNull($conversion);
+        self::assertSame('csv', $conversion->getSourceFormat());
+
+        $storedFilePath = sprintf('uploads/%s/%s.csv', AppFixtures::ACME_ID, $payload['id']);
+        self::assertTrue($this->defaultStorage()->fileExists($storedFilePath));
+        self::assertSame(
+            file_get_contents(self::fixturePath('sample.csv')),
+            $this->defaultStorage()->read($storedFilePath),
+        );
+    }
+
     public function testHappyPathDefaultsToJsonWhenAcceptHeaderIsMissing(): void
     {
         $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
