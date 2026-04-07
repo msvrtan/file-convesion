@@ -1,0 +1,19 @@
+meta {
+  name: Status: accepted (ACME, csv→json)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/conversions/019d86b0-0000-7000-8000-000000000001
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Pre-seeded conversion owned by acme-corp. Login as acme-corp first.
+}

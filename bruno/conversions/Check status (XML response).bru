@@ -1,0 +1,23 @@
+meta {
+  name: Check status (XML response)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/conversions/{{conversionId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Accept: application/xml
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Same as status check but requesting XML response format via Accept header.
+}

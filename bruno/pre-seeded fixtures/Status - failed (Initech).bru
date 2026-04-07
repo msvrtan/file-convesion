@@ -1,0 +1,20 @@
+meta {
+  name: Status: failed (Initech, json→json)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/conversions/019d86b0-0000-7000-8000-000000000003
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Pre-seeded failed conversion owned by initech. Login as initech first.
+  Change the `username` env variable to `initech` and re-run Login before using this.
+}

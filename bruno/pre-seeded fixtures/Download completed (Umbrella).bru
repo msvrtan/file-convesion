@@ -1,0 +1,20 @@
+meta {
+  name: Download completed (Umbrella, json→xml)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/conversions/019d86b0-0000-7000-8000-000000000004/download
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Download the completed conversion result.
+  Login as umbrella-corp first.
+}
