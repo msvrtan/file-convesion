@@ -45,8 +45,8 @@ Six test users are pre-seeded with the password `customer-password` — see [`Ap
 2. Client uploads a file via `POST /conversions` with the desired output format
 3. Server creates a `Conversion` entity with status `accepted` and dispatches an async message
 4. Messenger worker transitions the job through `inprogress` to either `completed` or `failed`
-5. Client polls `GET /conversions/{id}` until the status reaches `completed`
-6. Once complete, client downloads the result via `GET /conversions/{id}/download`
+5. Client polls `GET /conversions/{id}` until the status reaches a terminal state (`completed` or `failed`)
+6. If the job completed, client downloads the result via `GET /conversions/{id}/download`; if it failed, client handles the failure accordingly
 
 ## Design Decisions
 
