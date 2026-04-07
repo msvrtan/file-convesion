@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
+use League\Flysystem\Filesystem;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -207,35 +208,26 @@ final class ConversionDownloadTest extends WebTestCase
         string $targetFormat,
         string $content,
     ): void {
-        $path = sprintf(
-            '%s/var/storage/default/converted/%s/%s.%s',
-            dirname(__DIR__, 2),
-            $ownerId,
-            $conversionId,
-            $targetFormat,
+        $this->defaultStorage()->write(
+            sprintf('converted/%s/%s.%s', $ownerId, $conversionId, $targetFormat),
+            $content,
         );
-
-        $dir = \dirname($path);
-
-        if (!is_dir($dir)) {
-            mkdir($dir, 0o755, true);
-        }
-
-        file_put_contents($path, $content);
     }
 
     private function removeConvertedFile(string $ownerId, string $conversionId, string $targetFormat): void
     {
-        $path = sprintf(
-            '%s/var/storage/default/converted/%s/%s.%s',
-            dirname(__DIR__, 2),
-            $ownerId,
-            $conversionId,
-            $targetFormat,
-        );
+        $path = sprintf('converted/%s/%s.%s', $ownerId, $conversionId, $targetFormat);
 
-        if (is_file($path)) {
-            unlink($path);
+        if ($this->defaultStorage()->fileExists($path)) {
+            $this->defaultStorage()->delete($path);
         }
+    }
+
+    private function defaultStorage(): Filesystem
+    {
+        /** @var Filesystem $defaultStorage */
+        $defaultStorage = self::getContainer()->get('League\\Flysystem\\FilesystemOperator $defaultStorage');
+
+        return $defaultStorage;
     }
 }

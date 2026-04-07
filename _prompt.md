@@ -331,3 +331,12 @@ FilesystemOperator::readStream() can throw a Flysystem FilesystemException (e.g.
 ## 2026-04-07T14:40:50+02:00 [gpt-5.4 high]
 commit please
 
+## 2026-04-07T14:41:21+02:00 [gpt-5.4 high]
+There is functional coverage for the 404 case, but no test that exercises a successful download (200 + headers + streamed body) for a completed conversion with an actual file present in the Flysystem test storage. Adding a functional test that seeds %kernel.project_dir%/var/storage/default/converted/<owner>/<id>.<ext> (or uses the Flysystem service directly) would help prevent regressions in the new endpoint.
+
+## 2026-04-07T14:41:50+02:00 [gpt-5.4 high]
+please switch
+
+## 2026-04-07T14:43:32+02:00 [gpt-5.4 high]
+commit with _prompt.md
+
