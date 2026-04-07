@@ -373,3 +373,10 @@ completed-download coverage only exercises the XML branch, so regressions in dow
 
 commit together with _prompt.md
 
+## 2026-04-07T14:57:31+02:00 [gpt-5.4 high]
+the cross-customer 404 case is weaker than the other negative-path tests. api/tests/Functional/ConversionDownloadTest.php asserts only the status code, so an
+    inconsistent body or content type on that path would still pass. It should assert the same error contract as the other 404 cases.
+
+## 2026-04-07T14:57:40+02:00 [gpt-5.4 high]
+commit with _prompt.md
+

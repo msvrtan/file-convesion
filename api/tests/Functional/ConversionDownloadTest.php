@@ -220,6 +220,15 @@ final class ConversionDownloadTest extends WebTestCase
         );
 
         self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+
+        $content = $this->client->getResponse()->getContent();
+        self::assertIsString($content);
+
+        /** @var array{message?: mixed} $payload */
+        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+
+        self::assertSame('Conversion not found.', $payload['message'] ?? null);
     }
 
     public function testCompletedConversionWithoutStoredFileReturns404(): void
