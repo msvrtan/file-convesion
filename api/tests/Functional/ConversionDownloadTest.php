@@ -18,6 +18,8 @@ use Symfony\Component\Uid\Uuid;
 
 final class ConversionDownloadTest extends WebTestCase
 {
+    use AuthenticatesCustomer;
+
     /** @var list<string> */
     private array $createdConversionIds = [];
 
@@ -30,6 +32,11 @@ final class ConversionDownloadTest extends WebTestCase
     {
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+    }
+
+    protected function browser(): KernelBrowser
+    {
+        return $this->client;
     }
 
     protected function tearDown(): void
@@ -259,31 +266,6 @@ final class ConversionDownloadTest extends WebTestCase
         $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         self::assertSame('Conversion not found.', $payload['message'] ?? null);
-    }
-
-    private function createJwtToken(string $username): string
-    {
-        $this->client->request(
-            'POST',
-            '/auth/token',
-            server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode([
-                'username' => $username,
-                'password' => AppFixtures::DEFAULT_PASSWORD,
-            ], JSON_THROW_ON_ERROR),
-        );
-
-        self::assertResponseStatusCodeSame(Response::HTTP_OK);
-
-        $content = $this->client->getResponse()->getContent();
-        self::assertIsString($content);
-
-        /** @var array{token?: mixed} $payload */
-        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-
-        self::assertIsString($payload['token'] ?? null);
-
-        return $payload['token'];
     }
 
     private function seedConvertedFile(

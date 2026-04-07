@@ -17,12 +17,19 @@ use Symfony\Component\Uid\Uuid;
 
 final class ConversionAcceptTest extends WebTestCase
 {
+    use AuthenticatesCustomer;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+    }
+
+    protected function browser(): KernelBrowser
+    {
+        return $this->client;
     }
 
     public function testCustomerCanSubmitConversionRequest(): void
@@ -308,33 +315,6 @@ final class ConversionAcceptTest extends WebTestCase
         $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         self::assertSame('Only a single file upload is supported.', $payload['message'] ?? null);
-    }
-
-    private function createJwtToken(string $username): string
-    {
-        $this->client->request(
-            'POST',
-            '/auth/token',
-            server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode([
-                'username' => $username,
-                'password' => AppFixtures::DEFAULT_PASSWORD,
-            ], JSON_THROW_ON_ERROR),
-        );
-
-        self::assertResponseStatusCodeSame(Response::HTTP_OK);
-
-        $content = $this->client->getResponse()->getContent();
-        self::assertIsString($content);
-
-        /** @var array{token?: mixed} $payload */
-        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-
-        self::assertArrayHasKey('token', $payload);
-        self::assertIsString($payload['token']);
-        self::assertNotSame('', $payload['token']);
-
-        return $payload['token'];
     }
 
     private static function createFixtureUpload(

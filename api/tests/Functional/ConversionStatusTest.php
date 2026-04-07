@@ -12,12 +12,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class ConversionStatusTest extends WebTestCase
 {
+    use AuthenticatesCustomer;
+
     private KernelBrowser $client;
 
     protected function setUp(): void
     {
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+    }
+
+    protected function browser(): KernelBrowser
+    {
+        return $this->client;
     }
 
     #[DataProvider('statusProvider')]
@@ -136,30 +143,5 @@ final class ConversionStatusTest extends WebTestCase
         $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         self::assertSame('Conversion not found.', $payload['message'] ?? null);
-    }
-
-    private function createJwtToken(string $username): string
-    {
-        $this->client->request(
-            'POST',
-            '/auth/token',
-            server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode([
-                'username' => $username,
-                'password' => AppFixtures::DEFAULT_PASSWORD,
-            ], JSON_THROW_ON_ERROR),
-        );
-
-        self::assertResponseStatusCodeSame(Response::HTTP_OK);
-
-        $content = $this->client->getResponse()->getContent();
-        self::assertIsString($content);
-
-        /** @var array{token?: mixed} $payload */
-        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-
-        self::assertIsString($payload['token'] ?? null);
-
-        return $payload['token'];
     }
 }

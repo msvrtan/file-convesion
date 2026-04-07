@@ -40,6 +40,7 @@ final class AuthTokenTest extends WebTestCase
         self::assertNotSame('', $payload['token']);
     }
 
+    /** @param array<string, string> $payload */
     #[DataProvider('invalidCredentialsProvider')]
     public function testInvalidCredentialsAreRejected(array $payload): void
     {
@@ -58,6 +59,7 @@ final class AuthTokenTest extends WebTestCase
         self::assertSame('Invalid credentials.', $responsePayload['message'] ?? null);
     }
 
+    /** @param array<string, string> $payload */
     #[DataProvider('missingCredentialsProvider')]
     public function testMissingCredentialsAreRejected(array $payload, string $expectedDetail): void
     {

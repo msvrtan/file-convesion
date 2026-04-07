@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class ConversionSecurityTest extends WebTestCase
 {
+    use AuthenticatesCustomer;
+
     private const ACME_CONVERSION_ID = '019d86b0-0000-7000-8000-000000000001';
 
     private KernelBrowser $client;
@@ -20,6 +22,11 @@ final class ConversionSecurityTest extends WebTestCase
     {
         self::ensureKernelShutdown();
         $this->client = self::createClient();
+    }
+
+    protected function browser(): KernelBrowser
+    {
+        return $this->client;
     }
 
     public function testInvalidJwtCannotAccessCreateConversion(): void
@@ -98,33 +105,6 @@ final class ConversionSecurityTest extends WebTestCase
         );
 
         self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
-    }
-
-    private function createJwtToken(string $username): string
-    {
-        $this->client->request(
-            'POST',
-            '/auth/token',
-            server: ['CONTENT_TYPE' => 'application/json'],
-            content: json_encode([
-                'username' => $username,
-                'password' => AppFixtures::DEFAULT_PASSWORD,
-            ], JSON_THROW_ON_ERROR),
-        );
-
-        self::assertResponseStatusCodeSame(Response::HTTP_OK);
-
-        $content = $this->client->getResponse()->getContent();
-        self::assertIsString($content);
-
-        /** @var array{token?: mixed} $payload */
-        $payload = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-
-        self::assertArrayHasKey('token', $payload);
-        self::assertIsString($payload['token']);
-        self::assertNotSame('', $payload['token']);
-
-        return $payload['token'];
     }
 
     private function requestCreateConversion(?string $authorization = null): void
