@@ -301,3 +301,18 @@ messages are used only when there was an error in conversion
 ## 2026-04-07T12:59:20+02:00 [gpt-5.4 high]
 commit
 
+## 2026-04-07T13:34:18+02:00 [gpt-5.4 high]
+are there any cases we missed to test in ConvertFileHandler ?
+
+## 2026-04-07T13:35:03+02:00 [gpt-5.4 high]
+please add those tests, thank you
+
+## 2026-04-07T13:37:32+02:00 [gpt-5.4 high]
+commit please
+
+## 2026-04-07T13:38:32+02:00 [gpt-5.4 high]
+TestConverter should be used in test and SleepyConverter in all other environments
+
+## 2026-04-07T13:41:13+02:00 [gpt-5.4 high]
+commit together with _prompt.md
+
