@@ -7,6 +7,8 @@ namespace App\Tests\Functional;
 use App\DataFixtures\AppFixtures;
 use App\Model\ConvertFile;
 use App\Repository\ConversionRepository;
+use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -71,13 +73,11 @@ final class ConversionAcceptTest extends WebTestCase
         self::assertSame($payload['id'], (string) $conversion->getId());
         self::assertSame(AppFixtures::ACME_ID, (string) $conversion->getOwnerId());
 
-        $storedFilePath = self::storagePath(
-            sprintf('uploads/%s/%s.json', AppFixtures::ACME_ID, $payload['id']),
-        );
-        self::assertFileExists($storedFilePath);
+        $storedFilePath = sprintf('uploads/%s/%s.json', AppFixtures::ACME_ID, $payload['id']);
+        self::assertTrue($this->defaultStorage()->fileExists($storedFilePath));
         self::assertSame(
             file_get_contents(self::fixturePath('sample.json')),
-            file_get_contents($storedFilePath),
+            $this->defaultStorage()->read($storedFilePath),
         );
 
         $sentEnvelopes = $this->asyncTransport()->getSent();
@@ -312,17 +312,20 @@ final class ConversionAcceptTest extends WebTestCase
         return dirname(__DIR__).'/Fixtures/'.$filename;
     }
 
-    private static function storagePath(string $filename): string
-    {
-        return dirname(__DIR__, 2).'/var/storage/default/'.$filename;
-    }
-
     private function asyncTransport(): InMemoryTransport
     {
         /** @var InMemoryTransport $transport */
         $transport = self::getContainer()->get('messenger.transport.async');
 
         return $transport;
+    }
+
+    private function defaultStorage(): FilesystemOperator
+    {
+        /** @var Filesystem $defaultStorage */
+        $defaultStorage = self::getContainer()->get('League\\Flysystem\\FilesystemOperator $defaultStorage');
+
+        return $defaultStorage;
     }
 
     private static function normalizeXmlText(string $value): string
