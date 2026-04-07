@@ -288,3 +288,16 @@ please create handler for messenger that will accept ConvertFile message, get co
 ## 2026-04-05T10:45:15+02:00 [gpt-5.4 high]
 refactor handler to separate intention from implementation
 
+## 2026-04-07T12:57:16+02:00 [gpt-5.4 high]
+please add new fixture that will handle conversion entity: 
+
+- try to use different owners as much as possible
+- try to cover all input output pairs
+- cover all conversion statuses
+
+## 2026-04-07T12:58:52+02:00 [gpt-5.4 high]
+messages are used only when there was an error in conversion
+
+## 2026-04-07T12:59:20+02:00 [gpt-5.4 high]
+commit
+
