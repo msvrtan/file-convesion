@@ -66,7 +66,7 @@ final class ConversionSecurityTest extends WebTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_OK);
     }
 
-    public function testCustomerWithValidJwtCanDownloadConversion(): void
+    public function testCustomerWithValidJwtGets404ForMissingDownload(): void
     {
         $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
 

@@ -355,3 +355,10 @@ Return the converted file’s real media type — /home/nulldev/work/job-hunting
 ## 2026-04-07T14:48:09+02:00 [gpt-5.4 high]
 commit with _prompt.md
 
+## 2026-04-07T14:48:25+02:00 [gpt-5.4 high]
+Security test (ConversionSecurityTest.php line 73-79) — the download security test uses a random UUID (019d58eb-2dc4-7b0f-8fec-6bb9804399f2) that doesn't exist, so it tests "valid JWT + missing resource = 404". The test name testCustomerWithValidJwtCanDownloadConversion implies a success case. Consider renaming to something like
+  testCustomerWithValidJwtGets404ForMissingDownload to match what it actually asserts.
+
+## 2026-04-07T14:48:50+02:00 [gpt-5.4 high]
+commit with _prompt.md
+
