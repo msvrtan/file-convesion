@@ -6,7 +6,9 @@ namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Conversion;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
+use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -329,7 +331,7 @@ final class ConversionDownloadTest extends WebTestCase
 
     private function defaultStorage(): FilesystemOperator
     {
-        /** @var FilesystemOperator $defaultStorage */
+        /** @var Filesystem $defaultStorage */
         $defaultStorage = self::getContainer()->get('League\\Flysystem\\FilesystemOperator $defaultStorage');
 
         return $defaultStorage;
@@ -337,7 +339,7 @@ final class ConversionDownloadTest extends WebTestCase
 
     private function entityManager(): EntityManagerInterface
     {
-        /** @var EntityManagerInterface $entityManager */
+        /** @var EntityManager $entityManager */
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);
 
         return $entityManager;
