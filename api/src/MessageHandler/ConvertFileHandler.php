@@ -27,11 +27,11 @@ final class ConvertFileHandler
      */
     public function __invoke(ConvertFile $message): void
     {
-        $conversion = $this->loadConversion($message);
-        $sourceContent = $this->loadSourceContent($conversion);
-        $convertedContent = $this->convertContent($conversion, $sourceContent);
+        $entity = $this->loadConversion($message);
+        $sourceContent = $this->loadSourceContent($entity);
+        $convertedContent = $this->convertContent($entity, $sourceContent);
 
-        $this->storeConvertedContent($conversion, $convertedContent);
+        $this->storeConvertedContent($entity, $convertedContent);
     }
 
     private function loadConversion(ConvertFile $message): Conversion
@@ -48,26 +48,26 @@ final class ConvertFileHandler
     /**
      * @throws FilesystemException
      */
-    private function loadSourceContent(Conversion $conversion): string
+    private function loadSourceContent(Conversion $entity): string
     {
-        return $this->defaultStorage->read($this->sourcePath($conversion));
+        return $this->defaultStorage->read($this->sourcePath($entity));
     }
 
-    private function convertContent(Conversion $conversion, string $sourceContent): string
+    private function convertContent(Conversion $entity, string $sourceContent): string
     {
         return $this->fileConverter->convert(
             $sourceContent,
-            $conversion->getSourceFormat(),
-            $conversion->getTargetFormat(),
+            $entity->getSourceFormat(),
+            $entity->getTargetFormat(),
         );
     }
 
     /**
      * @throws FilesystemException
      */
-    private function storeConvertedContent(Conversion $conversion, string $convertedContent): void
+    private function storeConvertedContent(Conversion $entity, string $convertedContent): void
     {
-        $this->defaultStorage->write($this->convertedPath($conversion), $convertedContent);
+        $this->defaultStorage->write($this->convertedPath($entity), $convertedContent);
     }
 
     private function sourcePath(Conversion $conversion): string
