@@ -493,3 +493,28 @@ Here's my review of the test suite. Overall it's solid — good unit/functional 
                                                             
   Testing a stub that returns fixture files is very low value. It's not wrong, but it doesn't protect against real regressions.
 
+## 2026-04-07T15:30:24+02:00 [gpt-5.4 high]
+1. expectExceptionMessage called 3 times — only the last one is checked (bug)
+
+  RequestResolverTest:48-53:
+  $this->expectExceptionMessage('A file is required.');
+  $this->expectExceptionMessage('Supported source formats are csv, json, xlsx, ods.');
+  $this->expectExceptionMessage('Supported target formats are json, xml.');
+
+  expectExceptionMessage is a simple property setter ($this->expectedExceptionMessage = $message). Each call overwrites the previous one. Only 'Supported target formats
+  are json, xml.' is actually checked. If someone removed the file-required or source-format validation, this test would still pass.
+
+  Fix: use a single assertStringContainsString per expected fragment on the caught exception, or use expectExceptionMessageMatches with a regex matching all three.
+
+  2. Missing coverage: status endpoint 404 and cross-tenant
+
+  ConversionStatusTest only tests the 4 happy-path statuses via a data provider. The controller has two untested paths at ConversionController:69-75:
+
+  - 404 for non-existent conversion
+  - 404 when customer A requests customer B's conversion
+
+  The download tests check cross-tenant access, but the status endpoint doesn't. For a multi-tenant API these matter equally.
+
+## 2026-04-07T15:31:23+02:00 [gpt-5.4 high]
+commit
+

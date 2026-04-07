@@ -49,12 +49,20 @@ final class RequestResolverTest extends TestCase
     {
         $request = new Request(request: ['targetFormat' => 'yaml']);
 
-        $this->expectException(BadRequest::class);
-        $this->expectExceptionMessage('A file is required.');
-        $this->expectExceptionMessage('Supported source formats are csv, json, xlsx, ods.');
-        $this->expectExceptionMessage('Supported target formats are json, xml.');
-
-        $this->requestResolver->convertRequest($request, new UuidV7(), new UuidV7());
+        try {
+            $this->requestResolver->convertRequest($request, new UuidV7(), new UuidV7());
+            self::fail('Expected BadRequest to be thrown.');
+        } catch (BadRequest $exception) {
+            self::assertStringContainsString('A file is required.', $exception->getMessage());
+            self::assertStringContainsString(
+                'Supported source formats are csv, json, xlsx, ods.',
+                $exception->getMessage(),
+            );
+            self::assertStringContainsString(
+                'Supported target formats are json, xml.',
+                $exception->getMessage(),
+            );
+        }
     }
 
     public function testItAcceptsUppercaseFileExtensions(): void
