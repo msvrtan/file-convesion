@@ -57,4 +57,19 @@ final class ConversionRoutingTest extends WebTestCase
         self::assertResponseStatusCodeSame(Response::HTTP_METHOD_NOT_ALLOWED);
         self::assertResponseHeaderSame('allow', 'GET');
     }
+
+    public function testStatusEndpointRejectsInvalidUuid(): void
+    {
+        $token = $this->createJwtToken(AppFixtures::ACME_USERNAME);
+
+        $this->client->request(
+            'GET',
+            '/conversions/not-a-uuid',
+            server: [
+                'HTTP_AUTHORIZATION' => sprintf('Bearer %s', $token),
+            ],
+        );
+
+        self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+    }
 }
